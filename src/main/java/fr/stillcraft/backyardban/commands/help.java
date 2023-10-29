@@ -7,7 +7,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.plugin.Command;
 
 public class help extends Command {
-    public help() { super("proxykick:help","proxykick.kick"); }
+    public help() { super("backyardban:help","backyardban.kick"); }
 
     @Override
     public void execute(CommandSender sender, String[] args) {

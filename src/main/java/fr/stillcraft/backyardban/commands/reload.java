@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class reload extends Command implements TabExecutor {
-    public reload() { super("proxykick:reload","proxykick.reload"); }
+    public reload() { super("backyardban:reload","backyardban.reload"); }
 
     @Override
     public void execute(CommandSender sender, String[] args) {

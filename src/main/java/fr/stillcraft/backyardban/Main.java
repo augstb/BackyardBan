@@ -18,24 +18,16 @@ public final class Main extends Plugin {
     public static final String version = "1.0";
     // Used config files keys
     private static final String[] locale_keys = {
-            "kick.kicked","kick.confirm","kick.info","kick.offline","kick.bypass","kick.bypass_warn","kick.usage","kick.description",
-            "kickall.kicked","kickall.info","kickall.offline","kickall.usage","kickall.description","kickall.confirm",
-            "global.reason","global.separator","global.punctuation","global.empty","global.usage","global.description","global.prefix",
+            "ban.banned","ban.until","ban.confirm","ban.info","ban.bypass","ban.bypass_warn","ban.usage","ban.description",
+            "banip.banned","banip.until","banip.confirm","banip.info","banip.bypass","banip.bypass_warn","banip.usage","banip.description",
+            "global.reason","global.separator","global.punctuation","global.usage","global.description","global.prefix",
+            "global.days","global.hours","global.minutes","global.seconds",
             "help.usage","help.description",
             "version.usage","version.description",
             "reload.success","reload.usage","reload.description",
             "global.version" // VERSION SHOULD BE LAST
     };
     private static final String[] config_keys  = {"version","locale","broadcast"};
-    private static final String[] locale_keys_v1_0 = {
-            "format.kicked","format.confirm","format.info","errors.offline","errors.bypass","errors.bypass_warn","","",
-            "","","","","","",
-            "format.reason","","format.punctuation","errors.empty","","","",
-            "","",
-            "","",
-            "","","",
-            ""
-    };
 
     @Override
     public void onEnable() {
@@ -52,9 +44,9 @@ public final class Main extends Plugin {
 
             // Register new commands
             getProxy().getPluginManager().registerCommand(this, new help());
-            getProxy().getPluginManager().registerCommand(this, new kick());
-            getProxy().getPluginManager().registerCommand(this, new kickall());
-            getProxy().getPluginManager().registerCommand(this, new proxykick());
+            getProxy().getPluginManager().registerCommand(this, new ban());
+            // getProxy().getPluginManager().registerCommand(this, new banip());
+            getProxy().getPluginManager().registerCommand(this, new backyardban());
             getProxy().getPluginManager().registerCommand(this, new reload());
             getProxy().getPluginManager().registerCommand(this, new version());
         } catch (IOException e) {
@@ -103,34 +95,18 @@ public final class Main extends Plugin {
                         if (!locale_keys[i].equals("global.version")) {                         // if not global.version key
                             if (config.getString(locale_keys[i]).isEmpty()) {                   // if key is empty
                                 if (!config.getString("global.version").equals(version)) { // if versions are not the same
-                                    if (config.getString("global.version").isEmpty()) {    // convert from v1.0
-                                        if (!config.getString(locale_keys_v1_0[i]).isEmpty()) { // convert only non-empty keys
-                                            config.set(locale_keys[i], config.getString(locale_keys_v1_0[i]));
-                                            config.set(locale_keys_v1_0[i], null);
-                                        } else {                                                // Add default key to locale file
-                                            config.set(locale_keys[i], Main.getInstance().defaultConfig(locale_keys[i], fileName));
-                                        }
-                                    }
+                                    // config conversion
                                 } else {                                                        // if versions are the same add default
                                     config.set(locale_keys[i], Main.getInstance().defaultConfig(locale_keys[i], fileName));
                                 }
                                 save_config = true;
                             } else if (!config.getString("global.version").equals(version)) {
-                                if (config.getString("global.version").isEmpty()) {
-                                    // Convert from version 1.0
-                                    if (config.getString(locale_keys_v1_0[i]).isEmpty()) {
-                                        config.set(locale_keys[i], Main.getInstance().defaultConfig(locale_keys[i], fileName));
-                                    }
-                                }
+                                // config conversion
                             }
                         } else {
                             if(!config.getString(locale_keys[i]).equals(version)){ // modify version if does not coincides with plugin version.
                                 config.set(locale_keys[i], Main.getInstance().defaultConfig(locale_keys[i], fileName));
-
-                                // Throw old 1.0 config keys
-                                config.set("format", null);
-                                config.set("errors", null);
-
+                                // Throw old config keys
                                 save_config = true;
                             }
                         }
@@ -166,71 +142,83 @@ public final class Main extends Plugin {
             if(key.equals("global.reason"))       return "&c%reason%";
             if(key.equals("global.separator"))    return "&7: ";
             if(key.equals("global.punctuation"))  return "&7.";
-            if(key.equals("global.empty"))        return "&cError: nobody is online.";
             if(key.equals("global.usage"))        return "&fUsage: ";
             if(key.equals("global.description"))  return "&fDescription: ";
-            if(key.equals("global.prefix"))       return "&f[ProxyKick]";
+            if(key.equals("global.prefix"))       return "&f[BackyardBan]";
             if(key.equals("global.version"))      return version;
+            if(key.equals("global.days"))         return "d";
+            if(key.equals("global.hours"))        return "h";
+            if(key.equals("global.minutes"))      return "m";
+            if(key.equals("global.seconds"))      return "s";
 
-            if(key.equals("kick.kicked"))         return "&7You have been kicked by &f%sender%";
-            if(key.equals("kick.confirm"))        return "&7You kicked &f%player%";
-            if(key.equals("kick.info"))           return "&f%player% &7has been kicked by &f%sender%";
-            if(key.equals("kick.offline"))        return "&cError: &4%player%&c is not online.";
-            if(key.equals("kick.bypass"))         return "&7You can't kick &f%player%&7.";
-            if(key.equals("kick.bypass_warn"))    return "&f%sender% &7tried to kick you.";
-            if(key.equals("kick.usage"))          return "&3/kick &b[playername] (reason)";
-            if(key.equals("kick.description"))    return "&7Kick player with a message.";
+            if(key.equals("ban.banned"))          return "&7You have been banned by &f%sender%";
+            if(key.equals("ban.until"))           return "&7(&f%timeleft%&7 left)";
+            if(key.equals("ban.confirm"))         return "&7You banned &f%player%";
+            if(key.equals("ban.info"))            return "&f%player% &7has been banned by &f%sender%";
+            if(key.equals("ban.unknown"))         return "&cError: &4%player%&c is unknown.";
+            if(key.equals("ban.bypass"))          return "&7You can't ban &f%player%&7.";
+            if(key.equals("ban.bypass_warn"))     return "&f%sender% &7tried to ban you.";
+            if(key.equals("ban.usage"))           return "&3/ban &b[playername] &et:(1h|1d|1m|1y) &b(reason)";
+            if(key.equals("ban.description"))     return "&7Ban player with a message.";
 
-            if(key.equals("kickall.kicked"))      return "&7Everyone have been kicked by &f%sender%";
-            if(key.equals("kickall.confirm"))     return "&7You kicked everyone";
-            if(key.equals("kickall.info"))        return "&7Everyone have been kicked by &f%sender%";
-            if(key.equals("kickall.offline"))     return "&cError: nobody is kickable.";
-            if(key.equals("kickall.usage"))       return "&3/kickall &b(reason)";
-            if(key.equals("kickall.description")) return "&7Kick everyone with a message.";
+            if(key.equals("banip.banned"))        return "&7Your IP has been banned by &f%sender%";
+            if(key.equals("banip.until"))         return "&7(&f%timeleft%&7 left)";
+            if(key.equals("banip.confirm"))       return "&7You banned &f%ip%";
+            if(key.equals("banip.info"))          return "&f%ip% &7has been banned by &f%sender%";
+            if(key.equals("banip.bypass"))        return "&7You can't ban &f%ip%&7.";
+            if(key.equals("banip.bypass_warn"))   return "&f%sender% &7tried to ban you.";
+            if(key.equals("banip.usage"))         return "&3/banip &b[ip] &et:(1h|1d|1m|1y) &b(reason)";
+            if(key.equals("banip.description"))   return "&7Ban IP with a message.";
 
-            if(key.equals("help.usage"))          return "&3/proxykick:help";
+            if(key.equals("help.usage"))          return "&3/backyardban:help";
             if(key.equals("help.description"))    return "&7Show the help page.";
 
-            if(key.equals("version.usage"))          return "&3/proxykick:version";
-            if(key.equals("version.description"))    return "&7Show plugin version.";
+            if(key.equals("version.usage"))       return "&3/backyardban:version";
+            if(key.equals("version.description")) return "&7Show plugin version.";
 
             if(key.equals("reload.success"))      return "&7Config and locale files reloaded.";
-            if(key.equals("reload.usage"))        return "&3/proxykick:reload";
+            if(key.equals("reload.usage"))        return "&3/backyardban:reload";
             if(key.equals("reload.description"))  return "&7Reload the configuration files.";
         } else if(locale.equals("locale_fr")) {
             if(key.equals("global.reason"))       return "&c%reason%";
             if(key.equals("global.separator"))    return " &7: ";
             if(key.equals("global.punctuation"))  return "&7.";
-            if(key.equals("global.empty"))        return "&cErreur : personne n'est connecté.";
             if(key.equals("global.usage"))        return "&fSyntaxe : ";
             if(key.equals("global.description"))  return "&fDescription : ";
-            if(key.equals("global.prefix"))       return "&f[ProxyKick]";
+            if(key.equals("global.prefix"))       return "&f[BackyardBan]";
             if(key.equals("global.version"))      return version;
+            if(key.equals("global.days"))         return "j";
+            if(key.equals("global.hours"))        return "h";
+            if(key.equals("global.minutes"))      return "m";
+            if(key.equals("global.seconds"))      return "s";
 
-            if(key.equals("kick.kicked"))         return "&7Vous avez été ejecté par &f%sender%";
-            if(key.equals("kick.confirm"))        return "&7Vous avez éjecté &f%player%";
-            if(key.equals("kick.info"))           return "&f%player% &7a été éjecté par &f%sender%";
-            if(key.equals("kick.offline"))        return "&cErreur : &4%player%&c n'est pas connecté.";
-            if(key.equals("kick.bypass"))         return "&7Vous ne pouvez pas éjecter &f%player%&7.";
-            if(key.equals("kick.bypass_warn"))    return "&f%sender% &7a essayé de vous éjecter.";
-            if(key.equals("kick.usage"))          return "&3/kick &b[joueur] (raison)";
-            if(key.equals("kick.description"))    return "&7Ejecter un joueur avec un message.";
+            if(key.equals("ban.banned"))          return "&7Vous avez été banni par &f%sender%";
+            if(key.equals("ban.until"))           return "&7(Il reste &f%timeleft%&7)";
+            if(key.equals("ban.confirm"))         return "&7Vous avez banni &f%player%";
+            if(key.equals("ban.info"))            return "&f%player% &7a été banni par &f%sender%";
+            if(key.equals("ban.unknown"))         return "&cErreur : &4%player%&c est inconnu.";
+            if(key.equals("ban.bypass"))          return "&7Vous ne pouvez pas bannir &f%player%&7.";
+            if(key.equals("ban.bypass_warn"))     return "&f%sender% &7a essayé de vous bannir.";
+            if(key.equals("ban.usage"))           return "&3/ban &b[joueur] &et:(1h|1d|1m|1y) &b(raison)";
+            if(key.equals("ban.description"))     return "&7Bannir un joueur avec un message.";
 
-            if(key.equals("kickall.kicked"))      return "&7Tout le monde a été éjecté par &f%sender%";
-            if(key.equals("kickall.confirm"))     return "&7Vous avez éjecté tout le monde";
-            if(key.equals("kickall.info"))        return "&7Tout le monde a été éjecté par &f%sender%";
-            if(key.equals("kickall.offline"))     return "&cError: Personne n'est éjectable.";
-            if(key.equals("kickall.usage"))       return "&3/kickall &b(reason)";
-            if(key.equals("kickall.description")) return "&7Ejecter tout le monde avec un message.";
+            if(key.equals("banip.banned"))        return "&7Votre IP a été bannie par &f%sender%";
+            if(key.equals("banip.until"))         return "&7(Il reste &f%timeleft%&7)";
+            if(key.equals("banip.confirm"))       return "&7Vous avez banni &f%ip%";
+            if(key.equals("banip.info"))          return "&f%ip% &7a été banni par &f%sender%";
+            if(key.equals("banip.bypass"))        return "&7Vous ne pouvez pas bannir l'ip &f%ip%&7.";
+            if(key.equals("banip.bypass_warn"))   return "&f%sender% &7a essayé de bannir votre IP.";
+            if(key.equals("banip.usage"))         return "&3/banip &b[ip] &et:(1h|1d|1m|1y) &b(raison)";
+            if(key.equals("banip.description"))   return "&7Bannir une IP avec un message.";
 
-            if(key.equals("help.usage"))          return "&3/proxykick:help";
+            if(key.equals("help.usage"))          return "&3/backyardban:help";
             if(key.equals("help.description"))    return "&7Afficher la page d'aide.";
 
-            if(key.equals("version.usage"))       return "&3/proxykick:version";
+            if(key.equals("version.usage"))       return "&3/backyardban:version";
             if(key.equals("version.description")) return "&7Afficher la version du plugin.";
 
             if(key.equals("reload.success"))      return "&7Fichiers de config et de langue rechargés.";
-            if(key.equals("reload.usage"))        return "&3/proxykick:reload";
+            if(key.equals("reload.usage"))        return "&3/backyardban:reload";
             if(key.equals("reload.description"))  return "&7Recharger les fichiers de configuration.";
         }
         return "";

@@ -13,23 +13,23 @@ import net.md_5.bungee.api.plugin.TabExecutor;
 import java.util.HashSet;
 import java.util.Set;
 
-public class kickall extends Command implements TabExecutor {
-    public kickall() { super("proxykick:kickall", "proxykick.kickall", "kickall"); }
+public class banip extends Command implements TabExecutor {
+    public banip() { super("backyardban:banip", "backyardban.banip", "banip"); }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
         // Get each string from config and locale data
         boolean broadcast = Main.config.getBoolean("format.broadcast");
-        String kicked = Main.locale.getString("kickall.kicked");
-        String confirm = Main.locale.getString("kickall.confirm");
+        String kicked = Main.locale.getString("banip.kicked");
+        String confirm = Main.locale.getString("banip.confirm");
         String reason = Main.locale.getString("global.reason");
         String separator = Main.locale.getString("global.separator");
         String punctuation = Main.locale.getString("global.punctuation");
-        String info = Main.locale.getString("kickall.info");
-        String offline = Main.locale.getString("kickall.offline");
+        String info = Main.locale.getString("banip.info");
+        String offline = Main.locale.getString("banip.offline");
         String empty = Main.locale.getString("global.empty");
-        String usage = Main.locale.getString("global.usage")+Main.locale.getString("kickall.usage");
-        String description = Main.locale.getString("global.description")+Main.locale.getString("kickall.description");
+        String usage = Main.locale.getString("global.usage")+Main.locale.getString("banip.usage");
+        String description = Main.locale.getString("global.description")+Main.locale.getString("banip.description");
 
         // Colorize each string
         kicked = ChatColor.translateAlternateColorCodes('&', kicked);
@@ -82,7 +82,7 @@ public class kickall extends Command implements TabExecutor {
         for (ProxiedPlayer player : Main.getInstance().getProxy().getPlayers()) {
 
             // If player do not have bypass or sender is not player then kick
-            if (!player.hasPermission("proxykick.bypass") || !(sender instanceof ProxiedPlayer)) {
+            if (!player.hasPermission("backyardban.bypass") || !(sender instanceof ProxiedPlayer)) {
                 player.disconnect(new TextComponent(kicked));
                 success = true;
             }
