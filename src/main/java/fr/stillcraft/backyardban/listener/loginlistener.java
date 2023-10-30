@@ -45,19 +45,19 @@ public class loginlistener implements Listener {
             throw new RuntimeException(e);
         }
         // Check if player has bypass from knownplayers file
-        if (Boolean.parseBoolean(Main.knownplayers.get(player_uuid.toString()+".bypass").toString())) return;
+        if (Main.knownplayers.getBoolean(player_uuid.toString()+".bypass")) return;
 
         if (Main.banlist.getKeys().contains(player_uuid.toString())){
             long until = -1;
             if (Main.banlist.getSection(player_uuid.toString()).contains("until")){
-                until = Long.parseLong(Main.banlist.get(player_uuid.toString()+".until").toString());
+                until = Main.banlist.getLong(player_uuid.toString()+".until");
                 timeleft = until - System.currentTimeMillis() / 1000L;
             }
             if (Main.banlist.getSection(player_uuid.toString()).contains("banisher")){
-                banisher = Main.banlist.get(player_uuid.toString()+".banisher").toString();
+                banisher = Main.banlist.getString(player_uuid.toString()+".banisher");
             }
             if (Main.banlist.getSection(player_uuid.toString()).contains("reason")){
-                reason_string = Main.banlist.get(player_uuid.toString()+".reason").toString();
+                reason_string = Main.banlist.getString(player_uuid.toString()+".reason");
             }
             if (until < 0 || timeleft > 0) kick_player = true;
         }

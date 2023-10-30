@@ -21,6 +21,7 @@ public class backyardban extends Command implements TabExecutor {
     public void execute(CommandSender sender, String[] args) {
         if (args.length >= 1) {
             if(args[0].equals("ban")) new ban().execute(sender, Arrays.copyOfRange(args, 1, args.length));
+            else if(args[0].equals("unban")) new unban().execute(sender, Arrays.copyOfRange(args, 1, args.length));
             // else if(args[0].equals("banip")) new banip().execute(sender, Arrays.copyOfRange(args, 1, args.length));
             else if(args[0].equals("reload")) new reload().execute(sender, Arrays.copyOfRange(args, 1, args.length));
             else if(args[0].equals("help")) new help().execute(sender, Arrays.copyOfRange(args, 1, args.length));

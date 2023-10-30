@@ -22,6 +22,7 @@ public final class Main extends Plugin {
     // Used config files keys
     private static final String[] locale_keys = {
             "ban.banned","ban.until","ban.confirm","ban.info","ban.bypass","ban.bypass_warn","ban.usage","ban.description","ban.yourself",
+            "unban.confirm","unban.info","unban.usage","unban.description","unban.yourself","unban.notfound",
             "banip.banned","banip.until","banip.confirm","banip.info","banip.bypass","banip.bypass_warn","banip.usage","banip.description","banip.yourself",
             "global.reason","global.separator","global.punctuation","global.usage","global.description","global.prefix",
             "global.days","global.hours","global.minutes","global.seconds",
@@ -53,6 +54,7 @@ public final class Main extends Plugin {
             getProxy().getPluginManager().registerListener(this, new loginlistener());
             getProxy().getPluginManager().registerCommand(this, new help());
             getProxy().getPluginManager().registerCommand(this, new ban());
+            getProxy().getPluginManager().registerCommand(this, new unban());
             // getProxy().getPluginManager().registerCommand(this, new banip());
             getProxy().getPluginManager().registerCommand(this, new backyardban());
             getProxy().getPluginManager().registerCommand(this, new reload());
@@ -170,6 +172,13 @@ public final class Main extends Plugin {
             if(key.equals("ban.description"))     return "&7Ban player with a message.";
             if(key.equals("ban.yourself"))        return "&7You can't ban yourself.";
 
+            if(key.equals("unban.confirm"))       return "&7You unbanned &f%player%&7.";
+            if(key.equals("unban.info"))          return "&f%player% &7has been unbanned by &f%sender%&7.";
+            if(key.equals("unban.usage"))         return "&3/unban &b[playername]";
+            if(key.equals("unban.description"))   return "&7Unban player.";
+            if(key.equals("unban.yourself"))      return "&7You can't unban yourself.";
+            if(key.equals("unban.notfound"))      return "&f%player% &7is not banned.";
+
             if(key.equals("banip.banned"))        return "&7Your IP has been banned by &f%sender%";
             if(key.equals("banip.until"))         return "&7(&f%timeleft%&7 left)";
             if(key.equals("banip.confirm"))       return "&7You banned &f%ip%";
@@ -212,6 +221,13 @@ public final class Main extends Plugin {
             if(key.equals("ban.usage"))           return "&3/ban &b[joueur] &et:(1h|1d|1m|1y) &b(raison)";
             if(key.equals("ban.description"))     return "&7Bannir un joueur avec un message.";
             if(key.equals("ban.yourself"))        return "&7Vous ne pouvez pas vour bannir vous-même.";
+
+            if(key.equals("unban.confirm"))       return "&7Vous avez débanni &f%player%&7.";
+            if(key.equals("unban.info"))          return "&f%player% &7a été débanni par &f%sender%&7.";
+            if(key.equals("unban.usage"))         return "&3/unban &b[joueur]";
+            if(key.equals("unban.description"))   return "&7Débannir un joueur.";
+            if(key.equals("unban.yourself"))      return "&7Vous ne pouvez pas vous débannir vous-même.";
+            if(key.equals("unban.notfound"))      return "&f%player% &7n'est pas banni.";
 
             if(key.equals("banip.banned"))        return "&7Votre IP a été bannie par &f%sender%";
             if(key.equals("banip.until"))         return "&7(Il reste &f%timeleft%&7)";

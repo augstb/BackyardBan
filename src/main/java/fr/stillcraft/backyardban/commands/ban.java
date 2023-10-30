@@ -26,7 +26,7 @@ public class ban extends Command implements TabExecutor {
 
     public void execute_ban(UUID player_uuid, String player_name, String player_ip, CommandSender sender, String[] args, ProxiedPlayer player){
         // Get each string from config and locale data
-        boolean broadcast = Main.config.getBoolean("format.broadcast");
+        boolean broadcast = Main.config.getBoolean("broadcast");
         String banned = Main.locale.getString("ban.banned");
         String until = Main.locale.getString("ban.until");
         String confirm = Main.locale.getString("ban.confirm");
@@ -38,7 +38,6 @@ public class ban extends Command implements TabExecutor {
         String hours = Main.locale.getString("global.hours");
         String minutes = Main.locale.getString("global.minutes");
         String seconds = Main.locale.getString("global.seconds");
-        String unknown = Main.locale.getString("ban.unknown");
 
         // Colorize each string
         banned = ChatColor.translateAlternateColorCodes('&', banned);
@@ -52,7 +51,6 @@ public class ban extends Command implements TabExecutor {
         hours = ChatColor.translateAlternateColorCodes('&', hours);
         minutes = ChatColor.translateAlternateColorCodes('&', minutes);
         seconds = ChatColor.translateAlternateColorCodes('&', seconds);
-        unknown = ChatColor.translateAlternateColorCodes('&', unknown);
 
         // Construct complete ban strings
         StringBuilder stringBuilder = new StringBuilder();
@@ -192,11 +190,13 @@ public class ban extends Command implements TabExecutor {
         String yourself = Main.locale.getString("ban.yourself");
         String bypass = Main.locale.getString("ban.bypass");
         String bypass_warn = Main.locale.getString("ban.bypass_warn");
+        String unknown = Main.locale.getString("ban.unknown");
         usage = ChatColor.translateAlternateColorCodes('&', usage);
         description = ChatColor.translateAlternateColorCodes('&', description);
         yourself = ChatColor.translateAlternateColorCodes('&', yourself);
         bypass = ChatColor.translateAlternateColorCodes('&', bypass);
         bypass_warn = ChatColor.translateAlternateColorCodes('&', bypass_warn);
+        unknown = ChatColor.translateAlternateColorCodes('&', unknown);
 
         if (args.length > 0) {
             // Return help message
@@ -244,13 +244,13 @@ public class ban extends Command implements TabExecutor {
             // If player is not online, then search in the database file
             if (!player_found) {
                 for (String key: Main.knownplayers.getKeys()) {
-                    if (args[0].equalsIgnoreCase(Main.knownplayers.get(key+".player").toString())) {
+                    if (args[0].equalsIgnoreCase(Main.knownplayers.getString(key+".player"))) {
                         player_found = true;
                         player_uuid = UUID.fromString(key);
-                        player_name = Main.knownplayers.get(key+".player").toString();
-                        player_ip = Main.knownplayers.get(key+".ip").toString();
+                        player_name = Main.knownplayers.getString(key+".player");
+                        player_ip = Main.knownplayers.getString(key+".ip");
                         // Check if player has bypass from knownplayers file
-                        if (Boolean.parseBoolean(Main.knownplayers.get(player_uuid.toString()+".bypass").toString())) {
+                        if (Main.knownplayers.getBoolean(player_uuid.toString()+".bypass")) {
                             bypass = bypass.replaceAll("%player%", player_name);
                             bypass_warn = bypass_warn.replaceAll("%sender%", sender.getName());
                             sender.sendMessage(new TextComponent(bypass));
@@ -264,9 +264,8 @@ public class ban extends Command implements TabExecutor {
             }
 
             if (!player_found) {
-                // Send usage and description message to sender if no player has been banned.
-                sender.sendMessage(new TextComponent(usage));
-                sender.sendMessage(new TextComponent(description));
+                // Send message to sender if no player has been banned.
+                sender.sendMessage(new TextComponent(unknown));
             }
         } else {
             // Send usage and description message to sender
