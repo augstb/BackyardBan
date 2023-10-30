@@ -208,6 +208,7 @@ public class ban extends Command implements TabExecutor {
 
             // Loop over players
             UUID player_uuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
+            UUID sender_uuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
             String player_name = "";
             String player_ip = "";
             Boolean player_found = false;
@@ -218,20 +219,20 @@ public class ban extends Command implements TabExecutor {
                     player_found = true;
                     player_uuid = pplayer.getUniqueId();
                     if(sender instanceof ProxiedPlayer) {
-                        // Deny players from banning themselves
-                        UUID sender_uuid = ((ProxiedPlayer) sender).getUniqueId();
-                        if (player_uuid == sender_uuid) {
-                            sender.sendMessage(new TextComponent(yourself));
-                        }
+                        sender_uuid = ((ProxiedPlayer) sender).getUniqueId();
                     }
-                    else if (player.hasPermission("backyardban.bypass") && (sender instanceof ProxiedPlayer)) {
+                    
+                    if (player_uuid == sender_uuid) {
+                        // Deny players from banning themselves
+                        sender.sendMessage(new TextComponent(yourself));
+                    }
+                    else if (pplayer.hasPermission("backyardban.bypass")) {
                         // Deny to ban players that have bypass permission
                         bypass = bypass.replaceAll("%player%", pplayer.getDisplayName());
                         bypass_warn = bypass_warn.replaceAll("%sender%", sender.getName());
                         sender.sendMessage(new TextComponent(bypass));
-                        player.sendMessage(new TextComponent(bypass_warn));
-                    }
-                    else {
+                        pplayer.sendMessage(new TextComponent(bypass_warn));
+                    } else {
                         // Ban this UUID
                         player_name = pplayer.getDisplayName();
                         player_ip = ((InetSocketAddress) pplayer.getSocketAddress()).getAddress().getHostAddress();
@@ -253,7 +254,6 @@ public class ban extends Command implements TabExecutor {
                             bypass = bypass.replaceAll("%player%", player_name);
                             bypass_warn = bypass_warn.replaceAll("%sender%", sender.getName());
                             sender.sendMessage(new TextComponent(bypass));
-                            player.sendMessage(new TextComponent(bypass_warn));
                         }
                         else{
                             // EXECUTE BAN
