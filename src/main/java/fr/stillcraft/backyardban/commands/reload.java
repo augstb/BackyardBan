@@ -39,12 +39,14 @@ public class reload extends Command implements TabExecutor {
         Main.checkConfig("locale_fr");
         Main.checkConfig("locale_en");
         Main.checkConfig("banlist");
+        Main.checkConfig("knownplayers");
         try {
             // Reload config file
             Main.config = Main.getInstance().getConfig("config");
             String locale_string = Main.config.getString("locale");
             Main.locale = Main.getInstance().getConfig("locale_" + locale_string);
             Main.banlist = Main.getInstance().getConfig("banlist");
+            Main.knownplayers = Main.getInstance().getConfig("knownplayers");
 
             String success = Main.locale.getString("global.prefix")+" "+Main.locale.getString("reload.success");
             success = ChatColor.translateAlternateColorCodes('&', success);

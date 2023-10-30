@@ -15,6 +15,7 @@ public final class Main extends Plugin {
     public static Configuration config;
     public static Configuration locale;
     public static Configuration banlist;
+    public static Configuration knownplayers;
 
     // Version (don't forget to increment)
     public static final String version = "1.0";
@@ -39,12 +40,14 @@ public final class Main extends Plugin {
         checkConfig("locale_fr");
         checkConfig("locale_en");
         checkConfig("banlist");
+        checkConfig("knownplayers");
         try {
             // Load config file
             config = getInstance().getConfig("config");
             String locale_string = config.getString("locale");
             locale = getInstance().getConfig("locale_" + locale_string);
             banlist = getInstance().getConfig("banlist");
+            knownplayers = getInstance().getConfig("knownplayers");
 
             // Register new commands
             getProxy().getPluginManager().registerListener(this, new loginlistener());
