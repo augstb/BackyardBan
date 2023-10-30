@@ -24,8 +24,7 @@ import java.util.logging.Level;
 public class ban extends Command implements TabExecutor {
     public ban() { super("backyardban:ban","backyardban.ban", "ban"); }
 
-    @Override
-    public void execute(CommandSender sender, String[] args) {
+    public void execute_ban(UUID player_uuid, String player_name, String player_ip, CommandSender sender, String[] args, ProxiedPlayer player){
         // Get each string from config and locale data
         boolean broadcast = Main.config.getBoolean("format.broadcast");
         String banned = Main.locale.getString("ban.banned");
@@ -35,16 +34,11 @@ public class ban extends Command implements TabExecutor {
         String separator = Main.locale.getString("global.separator");
         String punctuation = Main.locale.getString("global.punctuation");
         String info = Main.locale.getString("ban.info");
-        String bypass = Main.locale.getString("ban.bypass");
-        String bypass_warn = Main.locale.getString("ban.bypass_warn");
-        String usage = Main.locale.getString("global.usage")+Main.locale.getString("ban.usage");
-        String description = Main.locale.getString("global.description")+Main.locale.getString("ban.description");
         String days = Main.locale.getString("global.days");
         String hours = Main.locale.getString("global.hours");
         String minutes = Main.locale.getString("global.minutes");
         String seconds = Main.locale.getString("global.seconds");
         String unknown = Main.locale.getString("ban.unknown");
-        String yourself = Main.locale.getString("ban.yourself");
 
         // Colorize each string
         banned = ChatColor.translateAlternateColorCodes('&', banned);
@@ -54,16 +48,155 @@ public class ban extends Command implements TabExecutor {
         separator = ChatColor.translateAlternateColorCodes('&', separator);
         punctuation = ChatColor.translateAlternateColorCodes('&', punctuation);
         info = ChatColor.translateAlternateColorCodes('&', info);
-        usage = ChatColor.translateAlternateColorCodes('&', usage);
-        description = ChatColor.translateAlternateColorCodes('&', description);
-        bypass = ChatColor.translateAlternateColorCodes('&', bypass);
-        bypass_warn = ChatColor.translateAlternateColorCodes('&', bypass_warn);
         days = ChatColor.translateAlternateColorCodes('&', days);
         hours = ChatColor.translateAlternateColorCodes('&', hours);
         minutes = ChatColor.translateAlternateColorCodes('&', minutes);
         seconds = ChatColor.translateAlternateColorCodes('&', seconds);
         unknown = ChatColor.translateAlternateColorCodes('&', unknown);
+
+        // Construct complete ban strings
+        StringBuilder stringBuilder = new StringBuilder();
+
+        // Check if there is an end to that ban.
+        int reason_strstart = 1;
+        long timeleft = -1;
+        long endtime = -1;
+        String timeleft_str = "";
+        if (args.length > 1) {
+            if (args[1].startsWith("t:")) {
+                reason_strstart = 2;
+                String[] timeleft_str_parts = args[1].split(":");
+                if (timeleft_str_parts.length > 1) {
+                    String timeleft_str_tmp = timeleft_str_parts[1];
+                    // Parse and convert time format to seconds from s | min | h | d | m | y
+                    endtime = System.currentTimeMillis() / 1000L;
+                    if (timeleft_str_tmp.endsWith("s")) {
+                        String[] timeleft_parts = timeleft_str_tmp.split("s");
+                        if (timeleft_parts.length > 0) timeleft = Integer.parseInt(timeleft_parts[0]);
+                    }
+                    else if (timeleft_str_tmp.endsWith("min")) {
+                        String[] timeleft_parts = timeleft_str_tmp.split("min");
+                        if (timeleft_parts.length > 0) timeleft = 60*Integer.parseInt(timeleft_parts[0]);
+                    }
+                    else if (timeleft_str_tmp.endsWith("h")) {
+                        String[] timeleft_parts = timeleft_str_tmp.split("h");
+                        if (timeleft_parts.length > 0) timeleft = 3600*Integer.parseInt(timeleft_parts[0]);
+                    }
+                    else if (timeleft_str_tmp.endsWith("d")) {
+                        String[] timeleft_parts = timeleft_str_tmp.split("d");
+                        if (timeleft_parts.length > 0) timeleft = 86400*Integer.parseInt(timeleft_parts[0]);
+                    }
+                    else if (timeleft_str_tmp.endsWith("m")) {
+                        String[] timeleft_parts = timeleft_str_tmp.split("m");
+                        if (timeleft_parts.length > 0) timeleft = 2592000*Integer.parseInt(timeleft_parts[0]);
+                    }
+                    else if (timeleft_str_tmp.endsWith("y")) {
+                        String[] timeleft_parts = timeleft_str_tmp.split("y");
+                        if (timeleft_parts.length > 0) timeleft = 31104000*Integer.parseInt(timeleft_parts[0]);
+                    }
+                    if (timeleft > 0) {
+                        endtime += timeleft;
+                        Duration d = Duration.ofSeconds(timeleft);
+                        long int_days = d.toDays();
+                        d = d.minusDays(int_days);
+                        long int_hours = d.toHours();
+                        d = d.minusHours(int_hours);
+                        long int_minutes = d.toMinutes();
+                        d = d.minusMinutes(int_minutes);
+                        long int_seconds = d.getSeconds();
+                        if (int_days > 0) timeleft_str += Long.toString(int_days) + days;
+                        else if (int_hours > 0) timeleft_str += Long.toString(int_hours) + hours;
+                        else if (int_minutes > 0) timeleft_str += Long.toString(int_minutes) + minutes;
+                        else if (int_seconds > 0) timeleft_str += Long.toString(int_seconds) + seconds;
+                    }
+                    else endtime = -1;
+                } else {
+                    // Handle the case where there is no colon in the string
+                    // You can set a default value, display an error message, or take appropriate action.
+                }
+            }
+        }
+
+        for (String arg : Arrays.copyOfRange(args, reason_strstart, args.length)) {
+            stringBuilder.append(arg).append(" ");
+        }
+        String reason_string = stringBuilder.toString();
+
+        if (timeleft > 0) {
+            banned += " " + until;
+            confirm += " " + until;
+            info += " " + until;
+        }
+        // Check if there is a reason or not.
+        if (reason_string.trim().isEmpty()) {
+            banned += punctuation;
+            confirm += punctuation;
+            info += punctuation;
+        } else {
+            reason_string = reason_string.substring(0, reason_string.length()-1);
+            banned += separator + reason;
+            confirm += separator + reason;
+            info += separator + reason;
+        }
+
+        // Parse placeholders
+        banned = banned.replaceAll("%sender%", sender.getName());
+        confirm = confirm.replaceAll("%sender%", sender.getName());
+        info = info.replaceAll("%sender%", sender.getName());
+        banned = banned.replaceAll("%reason%", reason_string);
+        confirm = confirm.replaceAll("%reason%", reason_string);
+        info = info.replaceAll("%reason%", reason_string);
+        banned = banned.replaceAll("%player%", player_name);
+        confirm = confirm.replaceAll("%player%", player_name);
+        info = info.replaceAll("%player%", player_name);
+        banned = banned.replaceAll("%timeleft%", timeleft_str);
+        confirm = confirm.replaceAll("%timeleft%", timeleft_str);
+        info = info.replaceAll("%timeleft%", timeleft_str);
+
+        // Execute actions (kicks player, and send messages)
+        if (player != Main.getInstance().getProxy().getPlayer("")) player.disconnect(new TextComponent(banned));
+        Main.getInstance().getLogger().log(Level.INFO, info);
+
+        // Register the ban in yaml file.
+        Date endtime_date = new Date(endtime * 1000L);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String formattedDate = sdf.format(endtime_date);
+        if (endtime < 0) formattedDate = "Forever";
+        Main.banlist.set(player_uuid.toString()+".player", player_name);
+        Main.banlist.set(player_uuid.toString()+".banisher", sender.getName());
+        Main.banlist.set(player_uuid.toString()+".until", endtime);
+        Main.banlist.set(player_uuid.toString()+".untildate", formattedDate);
+        Main.banlist.set(player_uuid.toString()+".reason", reason_string);
+        Main.banlist.set(player_uuid.toString()+".ip", player_ip);
+        try {
+            Main.getInstance().saveConfig(Main.banlist, "banlist");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Broadcast message to all players if broadcast true in config
+        if (broadcast) {
+            for (ProxiedPlayer pp : Main.getInstance().getProxy().getPlayers()) {
+                pp.sendMessage(new TextComponent(info));
+            }
+        } else {
+            sender.sendMessage(new TextComponent(confirm));
+        }
+        return;
+    }
+
+    @Override
+    public void execute(CommandSender sender, String[] args) {
+        String usage = Main.locale.getString("global.usage")+Main.locale.getString("ban.usage");
+        String description = Main.locale.getString("global.description")+Main.locale.getString("ban.description");
+        String yourself = Main.locale.getString("ban.yourself");
+        String bypass = Main.locale.getString("ban.bypass");
+        String bypass_warn = Main.locale.getString("ban.bypass_warn");
+        usage = ChatColor.translateAlternateColorCodes('&', usage);
+        description = ChatColor.translateAlternateColorCodes('&', description);
         yourself = ChatColor.translateAlternateColorCodes('&', yourself);
+        bypass = ChatColor.translateAlternateColorCodes('&', bypass);
+        bypass_warn = ChatColor.translateAlternateColorCodes('&', bypass_warn);
 
         if (args.length > 0) {
             // Return help message
@@ -74,165 +207,67 @@ public class ban extends Command implements TabExecutor {
             }
 
             // Loop over players
-            for (ProxiedPlayer player : Main.getInstance().getProxy().getPlayers()) {
-                if (args[0].equalsIgnoreCase(player.getDisplayName())) {
+            UUID player_uuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
+            String player_name = "";
+            String player_ip = "";
+            Boolean player_found = false;
+            ProxiedPlayer player = Main.getInstance().getProxy().getPlayer("");
 
-                    // Get UUID of player
-                    UUID player_uuid = player.getUniqueId();
-                    // Deny players from banning themselves
+            for (ProxiedPlayer pplayer : Main.getInstance().getProxy().getPlayers()) {
+                if (args[0].equalsIgnoreCase(pplayer.getDisplayName())) {
+                    player_found = true;
+                    player_uuid = pplayer.getUniqueId();
                     if(sender instanceof ProxiedPlayer) {
+                        // Deny players from banning themselves
                         UUID sender_uuid = ((ProxiedPlayer) sender).getUniqueId();
                         if (player_uuid == sender_uuid) {
                             sender.sendMessage(new TextComponent(yourself));
-                            return;
                         }
                     }
-
-                    // Construct complete ban strings
-                    StringBuilder stringBuilder = new StringBuilder();
-
-                    // Check if there is an end to that ban.
-                    int reason_strstart = 1;
-                    long timeleft = -1;
-                    long endtime = -1;
-                    String timeleft_str = "";
-                    if (args.length > 1) {
-                        if (args[1].startsWith("t:")) {
-                            reason_strstart = 2;
-                            String[] timeleft_str_parts = args[1].split(":");
-                            if (timeleft_str_parts.length > 1) {
-                                String timeleft_str_tmp = timeleft_str_parts[1];
-                                // Parse and convert time format to seconds from s | min | h | d | m | y
-                                endtime = System.currentTimeMillis() / 1000L;
-                                if (timeleft_str_tmp.endsWith("s")) {
-                                    String[] timeleft_parts = timeleft_str_tmp.split("s");
-                                    if (timeleft_parts.length > 0) timeleft = Integer.parseInt(timeleft_parts[0]);
-                                }
-                                else if (timeleft_str_tmp.endsWith("min")) {
-                                    String[] timeleft_parts = timeleft_str_tmp.split("min");
-                                    if (timeleft_parts.length > 0) timeleft = 60*Integer.parseInt(timeleft_parts[0]);
-                                }
-                                else if (timeleft_str_tmp.endsWith("h")) {
-                                    String[] timeleft_parts = timeleft_str_tmp.split("h");
-                                    if (timeleft_parts.length > 0) timeleft = 3600*Integer.parseInt(timeleft_parts[0]);
-                                }
-                                else if (timeleft_str_tmp.endsWith("d")) {
-                                    String[] timeleft_parts = timeleft_str_tmp.split("d");
-                                    if (timeleft_parts.length > 0) timeleft = 86400*Integer.parseInt(timeleft_parts[0]);
-                                }
-                                else if (timeleft_str_tmp.endsWith("m")) {
-                                    String[] timeleft_parts = timeleft_str_tmp.split("m");
-                                    if (timeleft_parts.length > 0) timeleft = 2592000*Integer.parseInt(timeleft_parts[0]);
-                                }
-                                else if (timeleft_str_tmp.endsWith("y")) {
-                                    String[] timeleft_parts = timeleft_str_tmp.split("y");
-                                    if (timeleft_parts.length > 0) timeleft = 31104000*Integer.parseInt(timeleft_parts[0]);
-                                }
-                                if (timeleft > 0) {
-                                    endtime += timeleft;
-                                    Duration d = Duration.ofSeconds(timeleft);
-                                    long int_days = d.toDays();
-                                    d = d.minusDays(int_days);
-                                    long int_hours = d.toHours();
-                                    d = d.minusHours(int_hours);
-                                    long int_minutes = d.toMinutes();
-                                    d = d.minusMinutes(int_minutes);
-                                    long int_seconds = d.getSeconds();
-                                    if (int_days > 0) timeleft_str += Long.toString(int_days) + days;
-                                    else if (int_hours > 0) timeleft_str += Long.toString(int_hours) + hours;
-                                    else if (int_minutes > 0) timeleft_str += Long.toString(int_minutes) + minutes;
-                                    else if (int_seconds > 0) timeleft_str += Long.toString(int_seconds) + seconds;
-                                }
-                                else endtime = -1;
-                            } else {
-                                // Handle the case where there is no colon in the string
-                                // You can set a default value, display an error message, or take appropriate action.
-                            }
-                        }
-                    }
-
-                    for (String arg : Arrays.copyOfRange(args, reason_strstart, args.length)) {
-                        stringBuilder.append(arg).append(" ");
-                    }
-                    String reason_string = stringBuilder.toString();
-
-                    if (timeleft > 0) {
-                        banned += " " + until;
-                        confirm += " " + until;
-                        info += " " + until;
-                    }
-                    // Check if there is a reason or not.
-                    if (reason_string.trim().isEmpty()) {
-                        banned += punctuation;
-                        confirm += punctuation;
-                        info += punctuation;
-                    } else {
-                        reason_string = reason_string.substring(0, reason_string.length()-1);
-                        banned += separator + reason;
-                        confirm += separator + reason;
-                        info += separator + reason;
-                    }
-
-                    // Parse placeholders
-                    bypass_warn = bypass_warn.replaceAll("%sender%", sender.getName());
-                    banned = banned.replaceAll("%sender%", sender.getName());
-                    confirm = confirm.replaceAll("%sender%", sender.getName());
-                    info = info.replaceAll("%sender%", sender.getName());
-                    banned = banned.replaceAll("%reason%", reason_string);
-                    confirm = confirm.replaceAll("%reason%", reason_string);
-                    info = info.replaceAll("%reason%", reason_string);
-                    bypass = bypass.replaceAll("%player%", player.getDisplayName());
-                    banned = banned.replaceAll("%player%", player.getDisplayName());
-                    confirm = confirm.replaceAll("%player%", player.getDisplayName());
-                    info = info.replaceAll("%player%", player.getDisplayName());
-                    banned = banned.replaceAll("%timeleft%", timeleft_str);
-                    confirm = confirm.replaceAll("%timeleft%", timeleft_str);
-                    info = info.replaceAll("%timeleft%", timeleft_str);
-
-                    // If player has bypass do not ban and warn player AND
-                    // If sender is a player (CONSOLE and Rcon are not concerned)
-                    if (player.hasPermission("backyardban.bypass") && (sender instanceof ProxiedPlayer)) {
+                    else if (player.hasPermission("backyardban.bypass") && (sender instanceof ProxiedPlayer)) {
+                        // Deny to ban players that have bypass permission
+                        bypass = bypass.replaceAll("%player%", pplayer.getDisplayName());
+                        bypass_warn = bypass_warn.replaceAll("%sender%", sender.getName());
                         sender.sendMessage(new TextComponent(bypass));
                         player.sendMessage(new TextComponent(bypass_warn));
-                        return;
                     }
-
-                    // Execute actions (kicks player, and send messages)
-                    player.disconnect(new TextComponent(banned));
-                    Main.getInstance().getLogger().log(Level.INFO, info);
-
-                    // Register the ban in yaml file.
-                    Date endtime_date = new Date(endtime * 1000L);
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    String formattedDate = sdf.format(endtime_date);
-                    if (endtime < 0) formattedDate = "Forever";
-                    Main.banlist.set(player_uuid.toString()+".player", player.getDisplayName());
-                    Main.banlist.set(player_uuid.toString()+".banisher", sender.getName());
-                    Main.banlist.set(player_uuid.toString()+".until", endtime);
-                    Main.banlist.set(player_uuid.toString()+".untildate", formattedDate);
-                    Main.banlist.set(player_uuid.toString()+".reason", reason_string);
-                    Main.banlist.set(player_uuid.toString()+".ip", ((InetSocketAddress) player.getSocketAddress()).getAddress().getHostAddress());
-                    try {
-                        Main.getInstance().saveConfig(Main.banlist, "banlist");
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+                    else {
+                        // Ban this UUID
+                        player_name = pplayer.getDisplayName();
+                        player_ip = ((InetSocketAddress) pplayer.getSocketAddress()).getAddress().getHostAddress();
+                        execute_ban(player_uuid, player_name, player_ip, sender, args, pplayer);
                     }
-
-                    // Broadcast message to all players if broadcast true in config
-                    if (broadcast) {
-                        for (ProxiedPlayer pp : Main.getInstance().getProxy().getPlayers()) {
-                            pp.sendMessage(new TextComponent(info));
-                        }
-                    } else {
-                        sender.sendMessage(new TextComponent(confirm));
-                    }
-                    return;
                 }
             }
-            // Player not found, send message to sender
-            unknown = unknown.replaceAll("%player%", args[0]);
-            sender.sendMessage(new TextComponent(unknown));
+            
+            // If player is not online, then search in the database file
+            if (!player_found) {
+                for (String key: Main.knownplayers.getKeys()) {
+                    if (args[0].equalsIgnoreCase(Main.knownplayers.get(key+".player").toString())) {
+                        player_found = true;
+                        player_uuid = UUID.fromString(key);
+                        player_name = Main.knownplayers.get(key+".player").toString();
+                        player_ip = Main.knownplayers.get(key+".ip").toString();
+                        // Check if player has bypass from knownplayers file
+                        if (Boolean.parseBoolean(Main.knownplayers.get(player_uuid.toString()+".bypass").toString())) {
+                            bypass = bypass.replaceAll("%player%", player_name);
+                            bypass_warn = bypass_warn.replaceAll("%sender%", sender.getName());
+                            sender.sendMessage(new TextComponent(bypass));
+                            player.sendMessage(new TextComponent(bypass_warn));
+                        }
+                        else{
+                            // EXECUTE BAN
+                            execute_ban(player_uuid, player_name, player_ip, sender, args, player);
+                        }
+                    }
+                }
+            }
 
+            if (!player_found) {
+                // Send usage and description message to sender if no player has been banned.
+                sender.sendMessage(new TextComponent(usage));
+                sender.sendMessage(new TextComponent(description));
+            }
         } else {
             // Send usage and description message to sender
             sender.sendMessage(new TextComponent(usage));

@@ -2,7 +2,9 @@ package fr.stillcraft.backyardban.listener;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.LoginEvent;
+import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
@@ -42,6 +44,8 @@ public class loginlistener implements Listener {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        // Check if player has bypass from knownplayers file
+        if (Boolean.parseBoolean(Main.knownplayers.get(player_uuid.toString()+".bypass").toString())) return;
 
         if (Main.banlist.getKeys().contains(player_uuid.toString())){
             long until = -1;
@@ -109,5 +113,23 @@ public class loginlistener implements Listener {
             event.getConnection().disconnect(new TextComponent(banned));
         }
 
+    }
+
+    @EventHandler
+    public void onLogin(PostLoginEvent event) {
+        ProxiedPlayer player = event.getPlayer();
+        UUID player_uuid = player.getUniqueId();
+        // If player has bypass, then remember it because we do not have access to permissions at pre login event)
+        if (player.hasPermission("backyardban.bypass")) {
+            Main.knownplayers.set(player_uuid.toString()+".bypass", true);
+        }
+        else {
+            Main.knownplayers.set(player_uuid.toString()+".bypass", false);
+        }
+        try {
+            Main.getInstance().saveConfig(Main.knownplayers, "knownplayers");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
