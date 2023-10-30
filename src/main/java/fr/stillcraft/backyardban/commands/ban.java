@@ -3,7 +3,6 @@ package fr.stillcraft.backyardban.commands;
 import com.google.common.collect.ImmutableSet;
 
 import fr.stillcraft.backyardban.Main;
-import io.netty.util.internal.StringUtil;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -11,8 +10,12 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -80,46 +83,60 @@ public class ban extends Command implements TabExecutor {
 
                     // Check if there is an end to that ban.
                     int reason_strstart = 1;
-                    int timeleft = -1;
+                    long timeleft = -1;
+                    long endtime = -1;
                     String timeleft_str = "";
-                    if (args.length > 2) {
+                    if (args.length > 1) {
                         if (args[1].startsWith("t:")) {
                             reason_strstart = 2;
-                            String timeleft_str_tmp = args[1].split(":")[1];
-                            // Parse and convert time format to seconds from s | min | h | d | m | y
-                            long endtime = System.currentTimeMillis() / 1000L;
-                            if (timeleft_str_tmp.endsWith("s")) {
-                                timeleft = Integer.parseInt(timeleft_str_tmp.split("s")[0]);
-                            }
-                            else if (timeleft_str_tmp.endsWith("min")) {
-                                timeleft = 60*Integer.parseInt(timeleft_str_tmp.split("min")[0]);
-                            }
-                            else if (timeleft_str_tmp.endsWith("h")) {
-                                timeleft = 3600*Integer.parseInt(timeleft_str_tmp.split("h")[0]);
-                            }
-                            else if (timeleft_str_tmp.endsWith("d")) {
-                                timeleft = 86400*Integer.parseInt(timeleft_str_tmp.split("d")[0]);
-                            }
-                            else if (timeleft_str_tmp.endsWith("m")) {
-                                timeleft = 2592000*Integer.parseInt(timeleft_str_tmp.split("m")[0]);
-                            }
-                            else if (timeleft_str_tmp.endsWith("y")) {
-                                timeleft = 31104000*Integer.parseInt(timeleft_str_tmp.split("y")[0]);
-                            }
-                            if (timeleft > 0) {
-                                endtime += timeleft;
-                                Duration d = Duration.ofSeconds(timeleft);
-                                long int_days = d.toDays();
-                                d = d.minusDays(int_days);
-                                long int_hours = d.toHours();
-                                d = d.minusHours(int_hours);
-                                long int_minutes = d.toMinutes();
-                                d = d.minusMinutes(int_minutes);
-                                long int_seconds = d.getSeconds();
-                                if (int_days > 0) timeleft_str += Long.toString(int_days) + days;
-                                else if (int_hours > 0) timeleft_str += Long.toString(int_hours) + hours;
-                                else if (int_minutes > 0) timeleft_str += Long.toString(int_minutes) + minutes;
-                                else if (int_seconds > 0) timeleft_str += Long.toString(int_seconds) + seconds;
+                            String[] timeleft_str_parts = args[1].split(":");
+                            if (timeleft_str_parts.length > 1) {
+                                String timeleft_str_tmp = timeleft_str_parts[1];
+                                // Parse and convert time format to seconds from s | min | h | d | m | y
+                                endtime = System.currentTimeMillis() / 1000L;
+                                if (timeleft_str_tmp.endsWith("s")) {
+                                    String[] timeleft_parts = timeleft_str_tmp.split("s");
+                                    if (timeleft_parts.length > 0) timeleft = Integer.parseInt(timeleft_parts[0]);
+                                }
+                                else if (timeleft_str_tmp.endsWith("min")) {
+                                    String[] timeleft_parts = timeleft_str_tmp.split("min");
+                                    if (timeleft_parts.length > 0) timeleft = 60*Integer.parseInt(timeleft_parts[0]);
+                                }
+                                else if (timeleft_str_tmp.endsWith("h")) {
+                                    String[] timeleft_parts = timeleft_str_tmp.split("h");
+                                    if (timeleft_parts.length > 0) timeleft = 3600*Integer.parseInt(timeleft_parts[0]);
+                                }
+                                else if (timeleft_str_tmp.endsWith("d")) {
+                                    String[] timeleft_parts = timeleft_str_tmp.split("d");
+                                    if (timeleft_parts.length > 0) timeleft = 86400*Integer.parseInt(timeleft_parts[0]);
+                                }
+                                else if (timeleft_str_tmp.endsWith("m")) {
+                                    String[] timeleft_parts = timeleft_str_tmp.split("m");
+                                    if (timeleft_parts.length > 0) timeleft = 2592000*Integer.parseInt(timeleft_parts[0]);
+                                }
+                                else if (timeleft_str_tmp.endsWith("y")) {
+                                    String[] timeleft_parts = timeleft_str_tmp.split("y");
+                                    if (timeleft_parts.length > 0) timeleft = 31104000*Integer.parseInt(timeleft_parts[0]);
+                                }
+                                if (timeleft > 0) {
+                                    endtime += timeleft;
+                                    Duration d = Duration.ofSeconds(timeleft);
+                                    long int_days = d.toDays();
+                                    d = d.minusDays(int_days);
+                                    long int_hours = d.toHours();
+                                    d = d.minusHours(int_hours);
+                                    long int_minutes = d.toMinutes();
+                                    d = d.minusMinutes(int_minutes);
+                                    long int_seconds = d.getSeconds();
+                                    if (int_days > 0) timeleft_str += Long.toString(int_days) + days;
+                                    else if (int_hours > 0) timeleft_str += Long.toString(int_hours) + hours;
+                                    else if (int_minutes > 0) timeleft_str += Long.toString(int_minutes) + minutes;
+                                    else if (int_seconds > 0) timeleft_str += Long.toString(int_seconds) + seconds;
+                                }
+                                else endtime = -1;
+                            } else {
+                                // Handle the case where there is no colon in the string
+                                // You can set a default value, display an error message, or take appropriate action.
                             }
                         }
                     }
@@ -173,6 +190,23 @@ public class ban extends Command implements TabExecutor {
                     // Execute actions (kicks player, and send messages)
                     player.disconnect(new TextComponent(banned));
                     Main.getInstance().getLogger().log(Level.INFO, info);
+
+                    // Register the ban in yaml file.
+                    Date endtime_date = new Date(endtime * 1000L);
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    String formattedDate = sdf.format(endtime_date);
+                    if (endtime < 0) formattedDate = "Forever";
+                    Main.banlist.set(player_uuid.toString()+".player", player.getDisplayName());
+                    Main.banlist.set(player_uuid.toString()+".banisher", sender.getName());
+                    Main.banlist.set(player_uuid.toString()+".until", endtime);
+                    Main.banlist.set(player_uuid.toString()+".untildate", formattedDate);
+                    Main.banlist.set(player_uuid.toString()+".reason", reason_string);
+                    Main.banlist.set(player_uuid.toString()+".ip", ((InetSocketAddress) player.getSocketAddress()).getAddress().getHostAddress());
+                    try {
+                        Main.getInstance().saveConfig(Main.banlist, "banlist");
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
 
                     // Broadcast message to all players if broadcast true in config
                     if (broadcast) {

@@ -19,7 +19,7 @@ public class reload extends Command implements TabExecutor {
     @Override
     public void execute(CommandSender sender, String[] args) {
         if(args.length > 0) {
-            // Get each string from config and locale data
+            // Get each string from config, locale data and banlist
             String usage = Main.locale.getString("global.usage")+Main.locale.getString("reload.usage");
             String description = Main.locale.getString("global.description")+Main.locale.getString("reload.description");
 
@@ -38,11 +38,13 @@ public class reload extends Command implements TabExecutor {
         Main.checkConfig("config");
         Main.checkConfig("locale_fr");
         Main.checkConfig("locale_en");
+        Main.checkConfig("banlist");
         try {
             // Reload config file
             Main.config = Main.getInstance().getConfig("config");
             String locale_string = Main.config.getString("locale");
             Main.locale = Main.getInstance().getConfig("locale_" + locale_string);
+            Main.banlist = Main.getInstance().getConfig("banlist");
 
             String success = Main.locale.getString("global.prefix")+" "+Main.locale.getString("reload.success");
             success = ChatColor.translateAlternateColorCodes('&', success);

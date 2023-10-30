@@ -8,11 +8,13 @@ import net.md_5.bungee.config.YamlConfiguration;
 import java.io.*;
 
 import fr.stillcraft.backyardban.commands.*;
+import fr.stillcraft.backyardban.listener.loginlistener;
 
 public final class Main extends Plugin {
     public static Main instance;
     public static Configuration config;
     public static Configuration locale;
+    public static Configuration banlist;
 
     // Version (don't forget to increment)
     public static final String version = "1.0";
@@ -36,13 +38,16 @@ public final class Main extends Plugin {
         checkConfig("config");
         checkConfig("locale_fr");
         checkConfig("locale_en");
+        checkConfig("banlist");
         try {
             // Load config file
             config = getInstance().getConfig("config");
             String locale_string = config.getString("locale");
             locale = getInstance().getConfig("locale_" + locale_string);
+            banlist = getInstance().getConfig("banlist");
 
             // Register new commands
+            getProxy().getPluginManager().registerListener(this, new loginlistener());
             getProxy().getPluginManager().registerCommand(this, new help());
             getProxy().getPluginManager().registerCommand(this, new ban());
             // getProxy().getPluginManager().registerCommand(this, new banip());
@@ -79,7 +84,7 @@ public final class Main extends Plugin {
                         config.set(locale_key, Main.getInstance().defaultConfig(locale_key, fileName));
                     }
                 }
-                if (fileName.equals("config")) {
+                else if (fileName.equals("config")) {
                     for (String config_key : config_keys) {
                         String temp_str = Main.getInstance().defaultConfig(config_key, fileName);
                         if (Boolean.parseBoolean(temp_str)) config.set(config_key, Boolean.parseBoolean(temp_str));
