@@ -20,8 +20,8 @@ public final class Main extends Plugin {
     public static final String version = "1.0";
     // Used config files keys
     private static final String[] locale_keys = {
-            "ban.banned","ban.until","ban.confirm","ban.info","ban.bypass","ban.bypass_warn","ban.usage","ban.description",
-            "banip.banned","banip.until","banip.confirm","banip.info","banip.bypass","banip.bypass_warn","banip.usage","banip.description",
+            "ban.banned","ban.until","ban.confirm","ban.info","ban.bypass","ban.bypass_warn","ban.usage","ban.description","ban.yourself",
+            "banip.banned","banip.until","banip.confirm","banip.info","banip.bypass","banip.bypass_warn","banip.usage","banip.description","banip.yourself",
             "global.reason","global.separator","global.punctuation","global.usage","global.description","global.prefix",
             "global.days","global.hours","global.minutes","global.seconds",
             "help.usage","help.description",
@@ -165,6 +165,7 @@ public final class Main extends Plugin {
             if(key.equals("ban.bypass_warn"))     return "&f%sender% &7tried to ban you.";
             if(key.equals("ban.usage"))           return "&3/ban &b[playername] &et:(1h|1d|1m|1y) &b(reason)";
             if(key.equals("ban.description"))     return "&7Ban player with a message.";
+            if(key.equals("ban.yourself"))        return "&7You can't ban yourself.";
 
             if(key.equals("banip.banned"))        return "&7Your IP has been banned by &f%sender%";
             if(key.equals("banip.until"))         return "&7(&f%timeleft%&7 left)";
@@ -174,6 +175,7 @@ public final class Main extends Plugin {
             if(key.equals("banip.bypass_warn"))   return "&f%sender% &7tried to ban you.";
             if(key.equals("banip.usage"))         return "&3/banip &b[ip] &et:(1h|1d|1m|1y) &b(reason)";
             if(key.equals("banip.description"))   return "&7Ban IP with a message.";
+            if(key.equals("banip.yourself"))      return "&7You can't ban your own IP.";
 
             if(key.equals("help.usage"))          return "&3/backyardban:help";
             if(key.equals("help.description"))    return "&7Show the help page.";
@@ -206,6 +208,7 @@ public final class Main extends Plugin {
             if(key.equals("ban.bypass_warn"))     return "&f%sender% &7a essayé de vous bannir.";
             if(key.equals("ban.usage"))           return "&3/ban &b[joueur] &et:(1h|1d|1m|1y) &b(raison)";
             if(key.equals("ban.description"))     return "&7Bannir un joueur avec un message.";
+            if(key.equals("ban.yourself"))        return "&7Vous ne pouvez pas vour bannir vous-même.";
 
             if(key.equals("banip.banned"))        return "&7Votre IP a été bannie par &f%sender%";
             if(key.equals("banip.until"))         return "&7(Il reste &f%timeleft%&7)";
@@ -215,6 +218,7 @@ public final class Main extends Plugin {
             if(key.equals("banip.bypass_warn"))   return "&f%sender% &7a essayé de bannir votre IP.";
             if(key.equals("banip.usage"))         return "&3/banip &b[ip] &et:(1h|1d|1m|1y) &b(raison)";
             if(key.equals("banip.description"))   return "&7Bannir une IP avec un message.";
+            if(key.equals("banip.yourself"))      return "&7Vous ne pouvez pas bannir votre propre IP.";
 
             if(key.equals("help.usage"))          return "&3/backyardban:help";
             if(key.equals("help.description"))    return "&7Afficher la page d'aide.";

@@ -44,6 +44,7 @@ public class ban extends Command implements TabExecutor {
         String minutes = Main.locale.getString("global.minutes");
         String seconds = Main.locale.getString("global.seconds");
         String unknown = Main.locale.getString("ban.unknown");
+        String yourself = Main.locale.getString("ban.yourself");
 
         // Colorize each string
         banned = ChatColor.translateAlternateColorCodes('&', banned);
@@ -62,6 +63,7 @@ public class ban extends Command implements TabExecutor {
         minutes = ChatColor.translateAlternateColorCodes('&', minutes);
         seconds = ChatColor.translateAlternateColorCodes('&', seconds);
         unknown = ChatColor.translateAlternateColorCodes('&', unknown);
+        yourself = ChatColor.translateAlternateColorCodes('&', yourself);
 
         if (args.length > 0) {
             // Return help message
@@ -77,6 +79,14 @@ public class ban extends Command implements TabExecutor {
 
                     // Get UUID of player
                     UUID player_uuid = player.getUniqueId();
+                    // Deny players from banning themselves
+                    if(sender instanceof ProxiedPlayer) {
+                        UUID sender_uuid = ((ProxiedPlayer) sender).getUniqueId();
+                        if (player_uuid == sender_uuid) {
+                            sender.sendMessage(new TextComponent(yourself));
+                            return;
+                        }
+                    }
 
                     // Construct complete ban strings
                     StringBuilder stringBuilder = new StringBuilder();
