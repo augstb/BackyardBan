@@ -159,10 +159,14 @@ public class ban extends Command implements TabExecutor {
         Date endtime_date = new Date(endtime * 1000L);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String formattedDate = sdf.format(endtime_date);
+        long fromtime = System.currentTimeMillis() / 1000L;
+        String formattedfromDate = sdf.format(new Date(fromtime * 1000L));
         if (endtime < 0) formattedDate = "Forever";
         Main.banlist.set(player_uuid.toString()+".player", player_name);
         Main.banlist.set(player_uuid.toString()+".banisher", sender.getName());
+        Main.banlist.set(player_uuid.toString()+".from", fromtime);
         Main.banlist.set(player_uuid.toString()+".until", endtime);
+        Main.banlist.set(player_uuid.toString()+".fromdate", formattedfromDate);
         Main.banlist.set(player_uuid.toString()+".untildate", formattedDate);
         Main.banlist.set(player_uuid.toString()+".reason", reason_string);
         Main.banlist.set(player_uuid.toString()+".ip", player_ip);

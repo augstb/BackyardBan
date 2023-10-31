@@ -163,11 +163,16 @@ public class banip extends Command implements TabExecutor {
         Date endtime_date = new Date(endtime * 1000L);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String formattedDate = sdf.format(endtime_date);
+        long fromtime = System.currentTimeMillis() / 1000L;
+        String formattedfromDate = sdf.format(new Date(fromtime * 1000L));
         if (endtime < 0) formattedDate = "Forever";
-        Main.baniplist.set(player_ip.replace(".","-").replace(":","_")+".banisher", sender.getName());
-        Main.baniplist.set(player_ip.replace(".","-").replace(":","_")+".until", endtime);
-        Main.baniplist.set(player_ip.replace(".","-").replace(":","_")+".untildate", formattedDate);
-        Main.baniplist.set(player_ip.replace(".","-").replace(":","_")+".reason", reason_string);
+        String ip_key = player_ip.replace(".","-").replace(":","_");
+        Main.baniplist.set(ip_key+".banisher", sender.getName());
+        Main.baniplist.set(ip_key+".from", fromtime);
+        Main.baniplist.set(ip_key+".until", endtime);
+        Main.baniplist.set(ip_key+".fromdate", formattedfromDate);
+        Main.baniplist.set(ip_key+".untildate", formattedDate);
+        Main.baniplist.set(ip_key+".reason", reason_string);
         try {
             Main.getInstance().saveConfig(Main.baniplist, "data/baniplist");
         } catch (IOException e) {
