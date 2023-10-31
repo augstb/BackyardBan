@@ -29,6 +29,7 @@ public class loginlistener implements Listener {
         String player = event.getConnection().getName();
         UUID player_uuid = event.getConnection().getUniqueId();
         String player_ip = ((InetSocketAddress) event.getConnection().getSocketAddress()).getAddress().getHostAddress();
+        String ip_key = player_ip.replace(".","-").replace(":","_");
 
         // Add player to knownplayers database file, or update it.
         long timestamp = System.currentTimeMillis() / 1000L;
@@ -40,7 +41,7 @@ public class loginlistener implements Listener {
         Main.knownplayers.set(player_uuid.toString()+".seen", timestamp);
         Main.knownplayers.set(player_uuid.toString()+".seendate", formattedDate);
         try {
-            Main.getInstance().saveConfig(Main.knownplayers, "knownplayers");
+            Main.getInstance().saveConfig(Main.knownplayers, "data/knownplayers");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -48,6 +49,7 @@ public class loginlistener implements Listener {
         if (Main.knownplayers.getBoolean(player_uuid.toString()+".bypass")) return;
 
         if (Main.banlist.getKeys().contains(player_uuid.toString())){
+            // Check if player is banned
             long until = -1;
             if (Main.banlist.getSection(player_uuid.toString()).contains("until")){
                 until = Main.banlist.getLong(player_uuid.toString()+".until");
@@ -58,6 +60,22 @@ public class loginlistener implements Listener {
             }
             if (Main.banlist.getSection(player_uuid.toString()).contains("reason")){
                 reason_string = Main.banlist.getString(player_uuid.toString()+".reason");
+            }
+            if (until < 0 || timeleft > 0) kick_player = true;
+        }
+        
+        if (!kick_player && Main.baniplist.getKeys().contains(ip_key)){
+            // Check if IP adress is banned
+            long until = -1;
+            if (Main.baniplist.getSection(ip_key).contains("until")){
+                until = Main.baniplist.getLong(ip_key+".until");
+                timeleft = until - System.currentTimeMillis() / 1000L;
+            }
+            if (Main.baniplist.getSection(ip_key).contains("banisher")){
+                banisher = Main.baniplist.getString(ip_key+".banisher");
+            }
+            if (Main.baniplist.getSection(ip_key).contains("reason")){
+                reason_string = Main.baniplist.getString(ip_key+".reason");
             }
             if (until < 0 || timeleft > 0) kick_player = true;
         }
@@ -127,7 +145,7 @@ public class loginlistener implements Listener {
             Main.knownplayers.set(player_uuid.toString()+".bypass", false);
         }
         try {
-            Main.getInstance().saveConfig(Main.knownplayers, "knownplayers");
+            Main.getInstance().saveConfig(Main.knownplayers, "data/knownplayers");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

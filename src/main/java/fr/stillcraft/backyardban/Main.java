@@ -6,6 +6,10 @@ import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 
 import java.io.*;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import fr.stillcraft.backyardban.commands.*;
 import fr.stillcraft.backyardban.listener.loginlistener;
@@ -18,12 +22,30 @@ public final class Main extends Plugin {
     public static Configuration baniplist;
     public static Configuration knownplayers;
 
+    
+    public static boolean isIPv4(String input) {
+        try {
+            InetAddress inetAddress = InetAddress.getByName(input);
+            return (inetAddress instanceof Inet4Address) && inetAddress.getHostAddress().equals(input);
+        } catch (UnknownHostException ex) {
+            return false;
+        }
+    }
+    public static boolean isIPv6(String input) {
+        try {
+            InetAddress inetAddress = InetAddress.getByName(input);
+            return (inetAddress instanceof Inet6Address);
+        } catch (UnknownHostException ex) {
+            return false;
+        }
+    }
+
     // Version (don't forget to increment)
     public static final String version = "1.0";
     // Used config files keys
     private static final String[] locale_keys = {
             "ban.banned","ban.until","ban.confirm","ban.info","ban.unknown","ban.bypass","ban.bypass_warn","ban.usage","ban.description","ban.yourself",
-            "unban.confirm","unban.info","unban.usage","unban.description","unban.yourself","unban.notfound",
+            "unban.confirm","unban.info","unban.usage","unban.description","unban.yourself","unban.notfound","unban.ipnotfound","unban.ipconfirm","unban.ipinfo",
             "banip.banned","banip.until","banip.confirm","banip.info","banip.unknown","banip.bypass","banip.bypass_warn","banip.usage","banip.description","banip.yourself",
             "global.reason","global.separator","global.punctuation","global.usage","global.description","global.prefix",
             "global.days","global.hours","global.minutes","global.seconds",
@@ -179,10 +201,13 @@ public final class Main extends Plugin {
 
             if(key.equals("unban.confirm"))       return "&7You unbanned &f%player%&7.";
             if(key.equals("unban.info"))          return "&f%player% &7has been unbanned by &f%sender%&7.";
-            if(key.equals("unban.usage"))         return "&3/unban &b[playername]";
-            if(key.equals("unban.description"))   return "&7Unban player.";
+            if(key.equals("unban.usage"))         return "&3/unban &b[ip|playername]";
+            if(key.equals("unban.description"))   return "&7Unban IP or player.";
             if(key.equals("unban.yourself"))      return "&7You can't unban yourself.";
             if(key.equals("unban.notfound"))      return "&f%player% &7is not banned.";
+            if(key.equals("unban.ipnotfound"))    return "&f%ip% &7is not banned.";
+            if(key.equals("unban.ipconfirm"))     return "&7You unbanned &f%ip%&7.";
+            if(key.equals("unban.ipinfo"))        return "&f%ip% &7has been unbanned by &f%sender%&7.";
 
             if(key.equals("banip.banned"))        return "&7Your IP has been banned by &f%sender%";
             if(key.equals("banip.until"))         return "&7(&f%timeleft%&7 left)";
@@ -230,10 +255,13 @@ public final class Main extends Plugin {
 
             if(key.equals("unban.confirm"))       return "&7Vous avez débanni &f%player%&7.";
             if(key.equals("unban.info"))          return "&f%player% &7a été débanni par &f%sender%&7.";
-            if(key.equals("unban.usage"))         return "&3/unban &b[joueur]";
-            if(key.equals("unban.description"))   return "&7Débannir un joueur.";
+            if(key.equals("unban.usage"))         return "&3/unban &b[ip|joueur]";
+            if(key.equals("unban.description"))   return "&7Débannir une IP ou un joueur.";
             if(key.equals("unban.yourself"))      return "&7Vous ne pouvez pas vous débannir vous-même.";
             if(key.equals("unban.notfound"))      return "&f%player% &7n'est pas banni.";
+            if(key.equals("unban.ipnotfound"))    return "&f%ip% &7n'est pas bannie.";
+            if(key.equals("unban.ipconfirm"))     return "&7Vous avez débanni &f%ip%&7.";
+            if(key.equals("unban.ipinfo"))        return "&f%ip% &7a été débannie par &f%sender%&7.";
 
             if(key.equals("banip.banned"))        return "&7Votre IP a été bannie par &f%sender%";
             if(key.equals("banip.until"))         return "&7(Il reste &f%timeleft%&7)";

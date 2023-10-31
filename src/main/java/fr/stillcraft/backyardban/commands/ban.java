@@ -167,7 +167,7 @@ public class ban extends Command implements TabExecutor {
         Main.banlist.set(player_uuid.toString()+".reason", reason_string);
         Main.banlist.set(player_uuid.toString()+".ip", player_ip);
         try {
-            Main.getInstance().saveConfig(Main.banlist, "banlist");
+            Main.getInstance().saveConfig(Main.banlist, "data/banlist");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -199,7 +199,7 @@ public class ban extends Command implements TabExecutor {
         unknown = ChatColor.translateAlternateColorCodes('&', unknown);
 
         if (args.length > 0) {
-            // Return help message
+            // Return help message | /!\ Problem if player is named "help".
             if (args[0].equalsIgnoreCase("help")) {
                 sender.sendMessage(new TextComponent(usage));
                 sender.sendMessage(new TextComponent(description));
@@ -207,11 +207,10 @@ public class ban extends Command implements TabExecutor {
             }
 
             // Loop over players
-            UUID player_uuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
+            UUID player_uuid = UUID.fromString("00000000-0000-0000-0000-000000000001");
             UUID sender_uuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
-            if (player_uuid == sender_uuid) {
-                // Deny players from banning themselves
-                sender.sendMessage(new TextComponent(yourself));
+            if(sender instanceof ProxiedPlayer) {
+                sender_uuid = ((ProxiedPlayer) sender).getUniqueId();
             }
             String player_name = "";
             String player_ip = "";
@@ -222,12 +221,11 @@ public class ban extends Command implements TabExecutor {
                 if (args[0].equalsIgnoreCase(pplayer.getDisplayName())) {
                     player_found = true;
                     player_uuid = pplayer.getUniqueId();
-                    if(sender instanceof ProxiedPlayer) {
-                        sender_uuid = ((ProxiedPlayer) sender).getUniqueId();
-                    }
                     
-                    
-                    else if (pplayer.hasPermission("backyardban.bypass")) {
+                    if (player_uuid == sender_uuid) {
+                        // Deny players from banning themselves
+                        sender.sendMessage(new TextComponent(yourself));
+                    } else if (pplayer.hasPermission("backyardban.bypass")) {
                         // Deny to ban players that have bypass permission
                         bypass = bypass.replaceAll("%player%", pplayer.getDisplayName());
                         bypass_warn = bypass_warn.replaceAll("%sender%", sender.getName());

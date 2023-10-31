@@ -11,11 +11,7 @@ import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.Inet6Address;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Arrays;
@@ -27,23 +23,6 @@ import java.util.logging.Level;
 
 public class banip extends Command implements TabExecutor {
     public banip() { super("backyardban:banip","backyardban.banip", "banip"); }
-
-    public static boolean isIPv4(String input) {
-        try {
-            InetAddress inetAddress = InetAddress.getByName(input);
-            return (inetAddress instanceof Inet4Address) && inetAddress.getHostAddress().equals(input);
-        } catch (UnknownHostException ex) {
-            return false;
-        }
-    }
-    public static boolean isIPv6(String input) {
-        try {
-            InetAddress inetAddress = InetAddress.getByName(input);
-            return (inetAddress instanceof Inet6Address);
-        } catch (UnknownHostException ex) {
-            return false;
-        }
-    }
 
     public void execute_banip(String player_ip, CommandSender sender, String[] args){
         // Get each string from config and locale data
@@ -174,7 +153,7 @@ public class banip extends Command implements TabExecutor {
 
         // Execute actions (kicks players, and send messages)
         for (ProxiedPlayer pp : Main.getInstance().getProxy().getPlayers()) {
-            if (player_ip == ((InetSocketAddress) pp.getSocketAddress()).getAddress().getHostAddress()) {
+            if (player_ip.equalsIgnoreCase(((InetSocketAddress) pp.getSocketAddress()).getAddress().getHostAddress())) {
                 pp.disconnect(new TextComponent(banned));
             }
         }
@@ -190,7 +169,7 @@ public class banip extends Command implements TabExecutor {
         Main.baniplist.set(player_ip.replace(".","-").replace(":","_")+".untildate", formattedDate);
         Main.baniplist.set(player_ip.replace(".","-").replace(":","_")+".reason", reason_string);
         try {
-            Main.getInstance().saveConfig(Main.baniplist, "baniplist");
+            Main.getInstance().saveConfig(Main.baniplist, "data/baniplist");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -222,7 +201,7 @@ public class banip extends Command implements TabExecutor {
         bypass_warn = ChatColor.translateAlternateColorCodes('&', bypass_warn);
 
         if (args.length > 0) {
-            // Return help message
+            // Return help message | /!\ Problem if player is named "help".
             if (args[0].equalsIgnoreCase("help")) {
                 sender.sendMessage(new TextComponent(usage));
                 sender.sendMessage(new TextComponent(description));
@@ -233,14 +212,14 @@ public class banip extends Command implements TabExecutor {
             String ip_toban = "";
             String player_name = "";
             Boolean arg_is_ip = false;
-            if (isIPv4(args[0]) || isIPv6(args[0])) {
+            if (Main.isIPv4(args[0]) || Main.isIPv6(args[0])) {
                 ip_toban = args[0];
                 arg_is_ip = true;
             }
             else player_name = args[0];
 
             // Loop over players
-            UUID player_uuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
+            UUID player_uuid = UUID.fromString("00000000-0000-0000-0000-000000000001");
             UUID sender_uuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
             if(sender instanceof ProxiedPlayer) {
                 sender_uuid = ((ProxiedPlayer) sender).getUniqueId();
@@ -266,7 +245,7 @@ public class banip extends Command implements TabExecutor {
                     } else {
                         // Execute ban of this IP adress
                         execute_banip(tmp_player_ip, sender, args);
-                        player_found = true;
+                        return; // Force exiting
                     }
                 }
             }
@@ -286,6 +265,7 @@ public class banip extends Command implements TabExecutor {
                         // Execute ban of this IP adress
                         execute_banip(tmp_player_ip, sender, args);
                         player_found = true;
+                        return; // Force exiting
                     }
                 }
             }

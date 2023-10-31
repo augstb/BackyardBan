@@ -11,6 +11,7 @@ import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
@@ -43,7 +44,7 @@ public class unban extends Command implements TabExecutor {
         Main.banlist.set(player_uuid.toString()+".until", endtime);
         Main.banlist.set(player_uuid.toString()+".untildate", formattedDate);
         try {
-            Main.getInstance().saveConfig(Main.banlist, "banlist");
+            Main.getInstance().saveConfig(Main.banlist, "data/banlist");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -56,6 +57,42 @@ public class unban extends Command implements TabExecutor {
         }
     }
 
+    public void execute_unbanip(String key, String tmp_player_ip, CommandSender sender){
+        // Get each string from config and locale data
+        boolean broadcast = Main.config.getBoolean("broadcast");
+
+        // Parse placeholders
+        String ipconfirm = Main.locale.getString("unban.ipconfirm");
+        String ipinfo = Main.locale.getString("unban.ipinfo");
+        ipconfirm = ChatColor.translateAlternateColorCodes('&', ipconfirm);
+        ipinfo = ChatColor.translateAlternateColorCodes('&', ipinfo);
+        ipconfirm = ipconfirm.replaceAll("%sender%", sender.getName());
+        ipconfirm = ipconfirm.replaceAll("%ip%", tmp_player_ip);
+        ipinfo = ipinfo.replaceAll("%sender%", sender.getName());
+        ipinfo = ipinfo.replaceAll("%ip%", tmp_player_ip);
+
+        long endtime = System.currentTimeMillis() / 1000L;
+        Date endtime_date = new Date(endtime * 1000L);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String formattedDate = sdf.format(endtime_date);
+        
+        // EXECUTE UNBAN
+        Main.baniplist.set(key+".until", endtime);
+        Main.baniplist.set(key+".untildate", formattedDate);
+        try {
+            Main.getInstance().saveConfig(Main.baniplist, "data/baniplist");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        if (broadcast) {
+            for (ProxiedPlayer pp : Main.getInstance().getProxy().getPlayers()) {
+                pp.sendMessage(new TextComponent(ipinfo));
+            }
+        } else {
+            sender.sendMessage(new TextComponent(ipconfirm));
+        }
+    }
+
     @Override
     public void execute(CommandSender sender, String[] args){
         // Get each string from config and locale data
@@ -63,46 +100,116 @@ public class unban extends Command implements TabExecutor {
         String usage = Main.locale.getString("global.usage")+Main.locale.getString("unban.usage");
         String description = Main.locale.getString("global.description")+Main.locale.getString("unban.description");
         String notfound = Main.locale.getString("unban.notfound");
+        String ipnotfound = Main.locale.getString("unban.ipnotfound");
         // Colorize each string
         yourself = ChatColor.translateAlternateColorCodes('&', yourself);
         usage = ChatColor.translateAlternateColorCodes('&', usage);
         description = ChatColor.translateAlternateColorCodes('&', description);
         notfound = ChatColor.translateAlternateColorCodes('&', notfound);
-        
+        ipnotfound = ChatColor.translateAlternateColorCodes('&', ipnotfound);
+
         if (args.length > 0) {
+            // Return help message | /!\ Problem if player is named "help".
+            if (args[0].equalsIgnoreCase("help")) {
+                sender.sendMessage(new TextComponent(usage));
+                sender.sendMessage(new TextComponent(description));
+                return;
+            }
+
             // Parse placeholders
-            notfound = notfound.replaceAll("%player%", args[0]);
-            UUID player_uuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
+            UUID player_uuid = UUID.fromString("00000000-0000-0000-0000-000000000001");
             UUID sender_uuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
+            String sender_ip = "";
+            if(sender instanceof ProxiedPlayer) {
+                ProxiedPlayer pp_sender = ((ProxiedPlayer) sender);
+                sender_uuid = pp_sender.getUniqueId();
+                sender_ip = ((InetSocketAddress) pp_sender.getSocketAddress()).getAddress().getHostAddress();
+            }
+
+            // Analyse argument. Is a playername or an IP adress ?
+            String ip_tounban = "";
             String player_name = "";
+            Boolean arg_is_ip = false;
             Boolean player_found = false;
-            for (String key: Main.banlist.getKeys()) {
-                if (args[0].equalsIgnoreCase(Main.banlist.getString(key+".player"))) {
-                    player_found = true;
-                    player_uuid = UUID.fromString(key);
-                    player_name = Main.banlist.getString(key+".player");
-                    if(sender instanceof ProxiedPlayer) {
-                        sender_uuid = ((ProxiedPlayer) sender).getUniqueId();
-                    }
-                    if (player_uuid == sender_uuid) {
-                        // Deny players from banning themselves
-                        sender.sendMessage(new TextComponent(yourself));
-                    }
-                    else {
-                        // Check if player is banned.
-                        if (Main.banlist.getLong(key+".until") > System.currentTimeMillis() / 1000L) {
-                            // Unban this UUID
-                            execute_unban(player_uuid, player_name, sender);
+            Boolean ip_found = false;
+            if (Main.isIPv4(args[0]) || Main.isIPv6(args[0])) {
+                ip_tounban = args[0];
+                arg_is_ip = true;
+            }
+            else player_name = args[0];
+
+            String tmp_player_ip = "";
+            if (arg_is_ip) {
+                // only unban ip.
+                for (String key: Main.baniplist.getKeys()) {
+                    tmp_player_ip = key.replace("-",".").replace("_",":");
+                    if (ip_tounban.equalsIgnoreCase(tmp_player_ip)) {
+                        long ip_until = Main.baniplist.getLong(key+".until");
+                        if (ip_tounban == sender_ip){
+                            // Deny players from unbanning themselves
+                            sender.sendMessage(new TextComponent(yourself));
+                        } else if ((ip_until > System.currentTimeMillis() / 1000L) || ip_until < 0) {
+                            // Unban this IP
+                            ip_found = true;
+                            execute_unbanip(key, tmp_player_ip, sender);
                         }
-                        else {
+                    }
+                }
+            } else {
+                // then unban a player
+                for (String key: Main.banlist.getKeys()) {
+                    if (args[0].equalsIgnoreCase(Main.banlist.getString(key+".player"))) {
+                        player_uuid = UUID.fromString(key);
+                        player_name = Main.banlist.getString(key+".player");
+                        long until = Main.banlist.getLong(key+".until");
+                        if (player_uuid == sender_uuid) {
+                            // Deny players from unbanning themselves
+                            sender.sendMessage(new TextComponent(yourself));
+                        } else if ((until > System.currentTimeMillis() / 1000L) || until < 0) {
+                            // Check if player is banned.
+                            // Unban this UUID
+                            player_found = true;
+                            execute_unban(player_uuid, player_name, sender);
+                        } else {
+                            notfound = notfound.replaceAll("%player%", args[0]);
                             sender.sendMessage(new TextComponent(notfound));
                         }
                     }
                 }
-            }
 
-            if (!player_found) {
+                // then unban his last ip if banned
+                for (String key: Main.knownplayers.getKeys()) {
+                    if (args[0].equalsIgnoreCase(Main.knownplayers.getString(key+".player"))) {
+                        player_uuid = UUID.fromString(key);
+                        player_name = Main.knownplayers.getString(key+".player");
+                        if (player_uuid == sender_uuid) {
+                            // Deny players from unbanning themselves
+                            sender.sendMessage(new TextComponent(yourself));
+                        } else {
+                            // Also unban last known IP adress if it is banned.
+                            String player_ip = Main.knownplayers.getString(key+".ip");
+                            String ip_key = player_ip.replace(".","-").replace(":","_");
+                            if (Main.baniplist.getKeys().contains(ip_key)){
+                                long ip_until = Main.baniplist.getLong(ip_key+".until");
+                                if ((ip_until > System.currentTimeMillis() / 1000L) || ip_until < 0 ) {
+                                    // Unban this IP if found.
+                                    player_found = true;
+                                    execute_unbanip(ip_key, player_ip, sender);
+                                    break; // exit this loop
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (arg_is_ip && !ip_found) {
+                ipnotfound = ipnotfound.replaceAll("%ip%", args[0]);
+                sender.sendMessage(new TextComponent(ipnotfound));
+            }
+            if (!arg_is_ip && !player_found) {
                 // Send message to sender if player is not banned.
+                notfound = notfound.replaceAll("%player%", args[0]);
                 sender.sendMessage(new TextComponent(notfound));
             }
         } else {
