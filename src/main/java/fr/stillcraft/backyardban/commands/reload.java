@@ -19,7 +19,7 @@ public class reload extends Command implements TabExecutor {
     @Override
     public void execute(CommandSender sender, String[] args) {
         if(args.length > 0) {
-            // Get each string from config, locale data and banlist
+            // Get each string from config, locale data and banlists
             String usage = Main.locale.getString("global.usage")+Main.locale.getString("reload.usage");
             String description = Main.locale.getString("global.description")+Main.locale.getString("reload.description");
 
@@ -36,17 +36,19 @@ public class reload extends Command implements TabExecutor {
         }
 
         Main.checkConfig("config");
-        Main.checkConfig("locale_fr");
-        Main.checkConfig("locale_en");
-        Main.checkConfig("banlist");
-        Main.checkConfig("knownplayers");
+        Main.checkConfig("locales/locale_fr");
+        Main.checkConfig("locales/locale_en");
+        Main.checkConfig("data/banlist");
+        Main.checkConfig("data/baniplist");
+        Main.checkConfig("data/knownplayers");
         try {
             // Reload config file
             Main.config = Main.getInstance().getConfig("config");
             String locale_string = Main.config.getString("locale");
-            Main.locale = Main.getInstance().getConfig("locale_" + locale_string);
-            Main.banlist = Main.getInstance().getConfig("banlist");
-            Main.knownplayers = Main.getInstance().getConfig("knownplayers");
+            Main.locale = Main.getInstance().getConfig("locales/locale_" + locale_string);
+            Main.banlist = Main.getInstance().getConfig("data/banlist");
+            Main.baniplist = Main.getInstance().getConfig("data/baniplist");
+            Main.knownplayers = Main.getInstance().getConfig("data/knownplayers");
 
             String success = Main.locale.getString("global.prefix")+" "+Main.locale.getString("reload.success");
             success = ChatColor.translateAlternateColorCodes('&', success);

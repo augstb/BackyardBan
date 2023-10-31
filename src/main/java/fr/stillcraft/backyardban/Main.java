@@ -15,15 +15,16 @@ public final class Main extends Plugin {
     public static Configuration config;
     public static Configuration locale;
     public static Configuration banlist;
+    public static Configuration baniplist;
     public static Configuration knownplayers;
 
     // Version (don't forget to increment)
     public static final String version = "1.0";
     // Used config files keys
     private static final String[] locale_keys = {
-            "ban.banned","ban.until","ban.confirm","ban.info","ban.bypass","ban.bypass_warn","ban.usage","ban.description","ban.yourself",
+            "ban.banned","ban.until","ban.confirm","ban.info","ban.unknown","ban.bypass","ban.bypass_warn","ban.usage","ban.description","ban.yourself",
             "unban.confirm","unban.info","unban.usage","unban.description","unban.yourself","unban.notfound",
-            "banip.banned","banip.until","banip.confirm","banip.info","banip.bypass","banip.bypass_warn","banip.usage","banip.description","banip.yourself",
+            "banip.banned","banip.until","banip.confirm","banip.info","banip.unknown","banip.bypass","banip.bypass_warn","banip.usage","banip.description","banip.yourself",
             "global.reason","global.separator","global.punctuation","global.usage","global.description","global.prefix",
             "global.days","global.hours","global.minutes","global.seconds",
             "help.usage","help.description",
@@ -38,24 +39,26 @@ public final class Main extends Plugin {
         instance = this;
 
         checkConfig("config");
-        checkConfig("locale_fr");
-        checkConfig("locale_en");
-        checkConfig("banlist");
-        checkConfig("knownplayers");
+        checkConfig("locales/locale_fr");
+        checkConfig("locales/locale_en");
+        checkConfig("data/banlist");
+        checkConfig("data/baniplist");
+        checkConfig("data/knownplayers");
         try {
             // Load config file
             config = getInstance().getConfig("config");
             String locale_string = config.getString("locale");
-            locale = getInstance().getConfig("locale_" + locale_string);
-            banlist = getInstance().getConfig("banlist");
-            knownplayers = getInstance().getConfig("knownplayers");
+            locale = getInstance().getConfig("locales/locale_" + locale_string);
+            banlist = getInstance().getConfig("data/banlist");
+            baniplist = getInstance().getConfig("data/baniplist");
+            knownplayers = getInstance().getConfig("data/knownplayers");
 
             // Register new commands
             getProxy().getPluginManager().registerListener(this, new loginlistener());
             getProxy().getPluginManager().registerCommand(this, new help());
             getProxy().getPluginManager().registerCommand(this, new ban());
             getProxy().getPluginManager().registerCommand(this, new unban());
-            // getProxy().getPluginManager().registerCommand(this, new banip());
+            getProxy().getPluginManager().registerCommand(this, new banip());
             getProxy().getPluginManager().registerCommand(this, new backyardban());
             getProxy().getPluginManager().registerCommand(this, new reload());
             getProxy().getPluginManager().registerCommand(this, new version());
@@ -79,12 +82,14 @@ public final class Main extends Plugin {
         try {
             boolean save_config = false;
             if (!file.exists()) {
+                
                 // Initialize configuration
+                file.getParentFile().mkdirs();
                 file.createNewFile();
                 Configuration config = Main.getInstance().getConfig(fileName);
 
                 // Writing default config values
-                if (fileName.equals("locale_en") || fileName.equals("locale_fr")) {
+                if (fileName.equals("locales/locale_en") || fileName.equals("locales/locale_fr")) {
                     for (String locale_key : locale_keys) {
                         config.set(locale_key, Main.getInstance().defaultConfig(locale_key, fileName));
                     }
@@ -100,7 +105,7 @@ public final class Main extends Plugin {
                 Main.getInstance().saveConfig(config, fileName);
             } else { // Check config data (add keys if does not exists)
                 Configuration config = Main.getInstance().getConfig(fileName);
-                if (fileName.equals("locale_en") || fileName.equals("locale_fr")) {
+                if (fileName.equals("locales/locale_en") || fileName.equals("locales/locale_fr")) {
                     for (int i=0; i<locale_keys.length; i++){                                   // browse locale keys ...
                         if (!locale_keys[i].equals("global.version")) {                         // if not global.version key
                             if (config.getString(locale_keys[i]).isEmpty()) {                   // if key is empty
@@ -148,7 +153,7 @@ public final class Main extends Plugin {
         if(key.equals("broadcast"))               return "true";
 
         // locale files default values :
-        if(locale.equals("locale_en")) {
+        if(locale.equals("locales/locale_en")) {
             if(key.equals("global.reason"))       return "&c%reason%";
             if(key.equals("global.separator"))    return "&7: ";
             if(key.equals("global.punctuation"))  return "&7.";
@@ -183,9 +188,10 @@ public final class Main extends Plugin {
             if(key.equals("banip.until"))         return "&7(&f%timeleft%&7 left)";
             if(key.equals("banip.confirm"))       return "&7You banned &f%ip%";
             if(key.equals("banip.info"))          return "&f%ip% &7has been banned by &f%sender%";
+            if(key.equals("banip.unknown"))       return "&cError: player is unknown, or IP is not valid.";
             if(key.equals("banip.bypass"))        return "&7You can't ban &f%ip%&7.";
-            if(key.equals("banip.bypass_warn"))   return "&f%sender% &7tried to ban you.";
-            if(key.equals("banip.usage"))         return "&3/banip &b[ip] &et:(1h|1d|1m|1y) &b(reason)";
+            if(key.equals("banip.bypass_warn"))   return "&f%sender% &7tried to ban your IP.";
+            if(key.equals("banip.usage"))         return "&3/banip &b[ip|playername] &et:(1h|1d|1m|1y) &b(reason)";
             if(key.equals("banip.description"))   return "&7Ban IP with a message.";
             if(key.equals("banip.yourself"))      return "&7You can't ban your own IP.";
 
@@ -198,7 +204,7 @@ public final class Main extends Plugin {
             if(key.equals("reload.success"))      return "&7Config and locale files reloaded.";
             if(key.equals("reload.usage"))        return "&3/backyardban:reload";
             if(key.equals("reload.description"))  return "&7Reload the configuration files.";
-        } else if(locale.equals("locale_fr")) {
+        } else if(locale.equals("locales/locale_fr")) {
             if(key.equals("global.reason"))       return "&c%reason%";
             if(key.equals("global.separator"))    return " &7: ";
             if(key.equals("global.punctuation"))  return "&7.";
@@ -232,10 +238,11 @@ public final class Main extends Plugin {
             if(key.equals("banip.banned"))        return "&7Votre IP a été bannie par &f%sender%";
             if(key.equals("banip.until"))         return "&7(Il reste &f%timeleft%&7)";
             if(key.equals("banip.confirm"))       return "&7Vous avez banni &f%ip%";
-            if(key.equals("banip.info"))          return "&f%ip% &7a été banni par &f%sender%";
+            if(key.equals("banip.info"))          return "&f%ip% &7a été bannie par &f%sender%";
+            if(key.equals("banip.unknown"))       return "&cErreur : le joueur est inconnu, ou l'IP est invalide.";
             if(key.equals("banip.bypass"))        return "&7Vous ne pouvez pas bannir l'ip &f%ip%&7.";
             if(key.equals("banip.bypass_warn"))   return "&f%sender% &7a essayé de bannir votre IP.";
-            if(key.equals("banip.usage"))         return "&3/banip &b[ip] &et:(1h|1d|1m|1y) &b(raison)";
+            if(key.equals("banip.usage"))         return "&3/banip &b[ip|joueur] &et:(1h|1d|1m|1y) &b(raison)";
             if(key.equals("banip.description"))   return "&7Bannir une IP avec un message.";
             if(key.equals("banip.yourself"))      return "&7Vous ne pouvez pas bannir votre propre IP.";
 
