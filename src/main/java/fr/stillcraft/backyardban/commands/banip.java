@@ -151,14 +151,6 @@ public class banip extends Command implements TabExecutor {
         confirm = confirm.replaceAll("%timeleft%", timeleft_str);
         info = info.replaceAll("%timeleft%", timeleft_str);
 
-        // Execute actions (kicks players, and send messages)
-        for (ProxiedPlayer pp : Main.getInstance().getProxy().getPlayers()) {
-            if (player_ip.equalsIgnoreCase(((InetSocketAddress) pp.getSocketAddress()).getAddress().getHostAddress())) {
-                pp.disconnect(new TextComponent(banned));
-            }
-        }
-        Main.getInstance().getLogger().log(Level.INFO, info);
-
         // Register the ban in yaml file.
         Date endtime_date = new Date(endtime * 1000L);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -178,7 +170,13 @@ public class banip extends Command implements TabExecutor {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
+        // Execute actions (kicks players, and send messages)
+        for (ProxiedPlayer pp : Main.getInstance().getProxy().getPlayers()) {
+            if (player_ip.equalsIgnoreCase(((InetSocketAddress) pp.getSocketAddress()).getAddress().getHostAddress())) {
+                pp.disconnect(new TextComponent(banned));
+            }
+        }
+        Main.getInstance().getLogger().log(Level.INFO, info);
         // Broadcast message to all players if broadcast true in config
         if (broadcast) {
             for (ProxiedPlayer pp : Main.getInstance().getProxy().getPlayers()) {

@@ -17,9 +17,10 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public class unban extends Command implements TabExecutor {
-    public unban() { super("backyardban:unban","backyardban.unban", "unban"); }
+    public unban() { super("backyardban:unban","backyardban.unban", "unban", "pardon"); }
 
     public void execute_unban(UUID player_uuid, String player_name, CommandSender sender){
         // Get each string from config and locale data
@@ -48,6 +49,7 @@ public class unban extends Command implements TabExecutor {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        Main.getInstance().getLogger().log(Level.INFO, info);
         if (broadcast) {
             for (ProxiedPlayer pp : Main.getInstance().getProxy().getPlayers()) {
                 pp.sendMessage(new TextComponent(info));
@@ -84,6 +86,7 @@ public class unban extends Command implements TabExecutor {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        Main.getInstance().getLogger().log(Level.INFO, ipinfo);
         if (broadcast) {
             for (ProxiedPlayer pp : Main.getInstance().getProxy().getPlayers()) {
                 pp.sendMessage(new TextComponent(ipinfo));
@@ -170,9 +173,6 @@ public class unban extends Command implements TabExecutor {
                             // Unban this UUID
                             player_found = true;
                             execute_unban(player_uuid, player_name, sender);
-                        } else {
-                            notfound = notfound.replaceAll("%player%", args[0]);
-                            sender.sendMessage(new TextComponent(notfound));
                         }
                     }
                 }
@@ -195,7 +195,6 @@ public class unban extends Command implements TabExecutor {
                                     // Unban this IP if found.
                                     player_found = true;
                                     execute_unbanip(ip_key, player_ip, sender);
-                                    break; // exit this loop
                                 }
                             }
                         }
