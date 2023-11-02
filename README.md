@@ -1,4 +1,4 @@
-# BackyardBan (BungeeCord Plugin)
+# <img src="./illustrations/backyardban.png" style="height:48px" /> BackyardBan (BungeeCord Plugin)
 
 #### Description:
 ***BackyardBan*** is a very basic BungeeCord plugin which allows Minecraft server moderators to ban players and ip addresses from the entire bungee network with optional expiration time as well as custom message.
