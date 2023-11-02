@@ -8,19 +8,19 @@ commands:
     aliases: [byb]
     description: Basic command.
   "backyardban:ban":
-    aliases: [byb:ban, ban]
+    aliases: [byb ban, ban]
     description: Ban player with an optional message and expiration time.
   "backyardban:banip":
-    aliases: [byb:banip, banip]
+    aliases: [byb banip, banip]
     description: Ban IP with an optional message and expiration time.
   "backyardban:unban":
-    aliases: [byb:unban, unban, pardon]
+    aliases: [byb unban, unban, pardon]
     description: Unban IP or player.
   "backyardban:help":
-    aliases: [byb:help]
+    aliases: [byb help]
     description: Show the help page.
   "backyardban:reload":
-    aliases: [byb:reload]
+    aliases: [byb reload]
     description: Reload the configuration files.
 permisisons:
   backyardban.ban:
@@ -32,4 +32,4 @@ permisisons:
   backyardban.bypass:
     description: Allows player to be insensitive to ban commands.
   backyardban.reload:
-    description: Allows player to reload config files using /backyardban reload command.
+    description: Allows player to reload config files using /backyardban:reload command.

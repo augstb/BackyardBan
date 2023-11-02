@@ -4,6 +4,7 @@ import fr.stillcraft.backyardban.Main;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
 public class help extends Command {
@@ -11,6 +12,11 @@ public class help extends Command {
 
     @Override
     public void execute(CommandSender sender, String[] args) {
+        boolean sender_isplayer = (sender instanceof ProxiedPlayer);
+        boolean has_unban_perm = (!sender_isplayer || sender.hasPermission("backyardban.unban"));
+        boolean has_banip_perm = (!sender_isplayer || sender.hasPermission("backyardban.banip"));
+        boolean has_reload_perm = (!sender_isplayer || sender.hasPermission("backyardban.reload"));
+
         // Get each string from config and locale data
         String global_prefix = Main.locale.getString("global.prefix");
         String help_usage = Main.locale.getString("help.usage");
@@ -43,10 +49,10 @@ public class help extends Command {
 
         sender.sendMessage(new TextComponent(ChatColor.WHITE+"--- "+global_prefix+ChatColor.WHITE+" ---"));
         sender.sendMessage(new TextComponent(ban_usage+ChatColor.WHITE+" - "+ban_description));
-        sender.sendMessage(new TextComponent(banip_usage+ChatColor.WHITE+" - "+banip_description));
-        sender.sendMessage(new TextComponent(unban_usage+ChatColor.WHITE+" - "+unban_description));
+        if (has_banip_perm) sender.sendMessage(new TextComponent(banip_usage+ChatColor.WHITE+" - "+banip_description));
+        if (has_unban_perm) sender.sendMessage(new TextComponent(unban_usage+ChatColor.WHITE+" - "+unban_description));
         sender.sendMessage(new TextComponent(help_usage+ChatColor.WHITE+" - "+help_description));
-        sender.sendMessage(new TextComponent(reload_usage+ChatColor.WHITE+" - "+reload_description));
+        if (has_reload_perm) sender.sendMessage(new TextComponent(reload_usage+ChatColor.WHITE+" - "+reload_description));
         sender.sendMessage(new TextComponent(version_usage+ChatColor.WHITE+" - "+version_description));
     }
 }
