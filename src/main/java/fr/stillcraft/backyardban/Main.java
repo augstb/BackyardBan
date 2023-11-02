@@ -196,7 +196,7 @@ public final class Main extends Plugin {
             if(key.equals("ban.bypass"))          return "&7You can't ban &f%player%&7.";
             if(key.equals("ban.bypass_warn"))     return "&f%sender% &7tried to ban you.";
             if(key.equals("ban.usage"))           return "&3/ban &b[playername] &et:(1h|1d|1m|1y) &b(reason)";
-            if(key.equals("ban.description"))     return "&7Ban player with a message.";
+            if(key.equals("ban.description"))     return "&7Ban player with an optional message and expiration time.";
             if(key.equals("ban.yourself"))        return "&7You can't ban yourself.";
 
             if(key.equals("unban.confirm"))       return "&7You unbanned &f%player%&7.";
@@ -217,7 +217,7 @@ public final class Main extends Plugin {
             if(key.equals("banip.bypass"))        return "&7You can't ban &f%ip%&7.";
             if(key.equals("banip.bypass_warn"))   return "&f%sender% &7tried to ban your IP.";
             if(key.equals("banip.usage"))         return "&3/banip &b[ip|playername] &et:(1h|1d|1m|1y) &b(reason)";
-            if(key.equals("banip.description"))   return "&7Ban IP with a message.";
+            if(key.equals("banip.description"))   return "&7Ban IP with an optional message and expiration time.";
             if(key.equals("banip.yourself"))      return "&7You can't ban your own IP.";
 
             if(key.equals("help.usage"))          return "&3/backyardban:help";
@@ -250,7 +250,7 @@ public final class Main extends Plugin {
             if(key.equals("ban.bypass"))          return "&7Vous ne pouvez pas bannir &f%player%&7.";
             if(key.equals("ban.bypass_warn"))     return "&f%sender% &7a essayé de vous bannir.";
             if(key.equals("ban.usage"))           return "&3/ban &b[joueur] &et:(1h|1d|1m|1y) &b(raison)";
-            if(key.equals("ban.description"))     return "&7Bannir un joueur avec un message.";
+            if(key.equals("ban.description"))     return "&7Bannir un joueur avec un message et un temps d'expiration optionels.";
             if(key.equals("ban.yourself"))        return "&7Vous ne pouvez pas vour bannir vous-même.";
 
             if(key.equals("unban.confirm"))       return "&7Vous avez débanni &f%player%&7.";
@@ -271,7 +271,7 @@ public final class Main extends Plugin {
             if(key.equals("banip.bypass"))        return "&7Vous ne pouvez pas bannir l'ip &f%ip%&7.";
             if(key.equals("banip.bypass_warn"))   return "&f%sender% &7a essayé de bannir votre IP.";
             if(key.equals("banip.usage"))         return "&3/banip &b[ip|joueur] &et:(1h|1d|1m|1y) &b(raison)";
-            if(key.equals("banip.description"))   return "&7Bannir une IP avec un message.";
+            if(key.equals("banip.description"))   return "&7Bannir une IP avec un message et un temps d'expiration optionels.";
             if(key.equals("banip.yourself"))      return "&7Vous ne pouvez pas bannir votre propre IP.";
 
             if(key.equals("help.usage"))          return "&3/backyardban:help";

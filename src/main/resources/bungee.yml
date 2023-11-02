@@ -2,17 +2,20 @@ name: BackyardBan
 version: '${project.version}'
 main: fr.stillcraft.backyardban.Main
 author: Augustin Blanchet
-description: BackyardBan is a BungeeCord plugin which allows Minecraft server moderators to kick players from the entire bungee network.
+description: BackyardBan is a BungeeCord plugin which allows Minecraft server moderators to ban players from the entire bungee network.
 commands:
   "backyardban":
     aliases: [byb]
     description: Basic command.
-  "backyardban:kick":
-    aliases: [byb:kick, kick]
-    description: Kick player with a message.
-  "backyardban:kickall":
-    aliases: [byb:kickall, kickall]
-    description: Kick everyone with a message.
+  "backyardban:ban":
+    aliases: [byb:ban, ban]
+    description: Ban player with an optional message and expiration time.
+  "backyardban:banip":
+    aliases: [byb:banip, banip]
+    description: Ban IP with an optional message and expiration time.
+  "backyardban:unban":
+    aliases: [byb:unban, unban, pardon]
+    description: Unban IP or player.
   "backyardban:help":
     aliases: [byb:help]
     description: Show the help page.
@@ -20,11 +23,13 @@ commands:
     aliases: [byb:reload]
     description: Reload the configuration files.
 permisisons:
-  backyardban.kick:
-    description: Allows to use the /kick, /backyardban and /byb commands.
-  backyardban.kickall:
-    description: Allows to use the /kickall and /backyardban:kickall commands.
+  backyardban.ban:
+    description: Allows to use the /ban, /backyardban and /byb commands.
+  backyardban.banip:
+    description: Allows to use the /banip and /backyardban:banip commands.
+  backyardban.unban:
+    description: Allows to use the /unban, /pardon and /backyardban:unban commands.
   backyardban.bypass:
-    description: Allows player to be insensitive to kick command.
+    description: Allows player to be insensitive to ban commands.
   backyardban.reload:
-    description: Allows player to reload config files using /backyardban:reload command.
+    description: Allows player to reload config files using /backyardban reload command.
