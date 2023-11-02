@@ -65,7 +65,7 @@ public class loginlistener implements Listener {
         }
         
         if (!kick_player && Main.baniplist.getKeys().contains(ip_key)){
-            // Check if IP adress is banned
+            // Check if IP address is banned
             long until = -1;
             if (Main.baniplist.getSection(ip_key).contains("until")){
                 until = Main.baniplist.getLong(ip_key+".until");

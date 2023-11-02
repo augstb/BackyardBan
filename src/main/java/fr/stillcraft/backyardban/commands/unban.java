@@ -186,7 +186,7 @@ public class unban extends Command implements TabExecutor {
                             // Deny players from unbanning themselves
                             sender.sendMessage(new TextComponent(yourself));
                         } else {
-                            // Also unban last known IP adress if it is banned.
+                            // Also unban last known IP address if it is banned.
                             String player_ip = Main.knownplayers.getString(key+".ip");
                             String ip_key = player_ip.replace(".","-").replace(":","_");
                             if (Main.baniplist.getKeys().contains(ip_key)){

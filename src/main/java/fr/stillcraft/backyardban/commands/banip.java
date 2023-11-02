@@ -211,7 +211,7 @@ public class banip extends Command implements TabExecutor {
                 return;
             }
 
-            // Analyse argument. Is a playername or an IP adress ?
+            // Analyse argument. Is a playername or an IP address ?
             String ip_toban = "";
             String player_name = "";
             Boolean arg_is_ip = false;
