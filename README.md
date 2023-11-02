@@ -1,33 +1,36 @@
-# ProxyKick (BungeeCord Plugin)
+# BackyardBan (BungeeCord Plugin)
 
 #### Description :
-***ProxyKick*** is a very basic BungeeCord plugin which allows Minecraft server moderators to kick players from the entire bungee network with optional custom message.
+***BackyardBan*** is a very basic BungeeCord plugin which allows Minecraft server moderators to ban players and ip adresses from the entire bungee network with optional expiration time as well as custom message.
 
 ![image](./illustrations/illustration.jpg)
 
 #### Features :
-- A *bypass* permission node is available to exempt players from beeing kicked (CONSOLE and Rcon can still kick anyone).
-- A *kick* command is available to kick a player from the entire bungee network with an optional custom message.
-- A *kickall* command is available to kick all players from the entire bungee network with an optional custom message.
+- A *bypass* permission node is available to exempt players from beeing banned.
+- A *ban* command is available to ban a player from the entire bungee network with an optional custom message and expiration time.
+- A *banip* command is available to ban IP adress from the entire bungee network (taking both playername or direct IP adress as argument), with a custom message and expiration time.
+- An *unban* command is available to unban both IP adress and playername. The *pardon* command is an alias of *unban*.
 - A *reload* command is available to reload configuration and localization data.
 - A *version* command is available to show plugin version and informations.
 - A *help* command is available to show the help page, containing command list.
-- Initial *localization* strings (English and French) are available, to customize kick messages.
+- Initial *localization* strings (English and French) are available, to customize ban messages.
 
 ---
 
 #### Permissions :
-```proxykick.kick``` - Allows to use the ```/kick``` and ```/proxykick:kick``` commands.<br/>
-```proxykick.kickall``` - Allows to use the ```/kickall``` and ```/proxykick:kickall``` commands.<br/>
-```proxykick.bypass``` - Allows player to be insensitive to ```/kick``` command.<br/>
-```proxykick.reload``` - Allows player to reload config files using ```/proxykick:reload``` command.<br/>
+```backyardban.ban``` - Allows to use the ```/ban``` and ```/backyardban:ban``` commands.<br/>
+```backyardban.banip``` - Allows to use the ```/banip``` and ```/backyardban:banip``` commands.<br/>
+```backyardban.unban``` - Allows to use the ```/unban```, ```/pardon``` and ```/backyardban:unban``` commands.<br/>
+```backyardban.bypass``` - Allows player to be insensitive to ```/ban``` or ```/banip``` command.<br/>
+```backyardban.reload``` - Allows player to reload config files using ```/backyardban:reload``` command.<br/>
 
 #### Usage :
-```/kick [player name] (reason)``` - Kick player with a message.<br/>
-```/kickall (reason)``` - Kick everyone with a message.<br/>
-```/proxykick:help``` - Show the help page.<br/>
-```/proxykick:reload``` - Reload the configuration files.<br/>
-```/proxykick:version``` - Show plugin version.<br/>
+```/ban [playername] {t:(1h|1d|1m|1y)} (reason)``` - Ban player with a message.<br/>
+```/banip [ip|playername] {t:(1h|1d|1m|1y)} (reason)``` - Ban IP with a message.<br/>
+```/unban [ip|playername]``` - Unban IP or player.<br/>
+```/backyardban:help``` - Show the help page.<br/>
+```/backyardban:reload``` - Reload the configuration files.<br/>
+```/backyardban:version``` - Show plugin version.<br/>
 
 ---
 

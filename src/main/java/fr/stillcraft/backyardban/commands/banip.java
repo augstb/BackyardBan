@@ -232,6 +232,8 @@ public class banip extends Command implements TabExecutor {
             for (ProxiedPlayer pplayer : Main.getInstance().getProxy().getPlayers()) {
                 tmp_player_ip = ((InetSocketAddress) pplayer.getSocketAddress()).getAddress().getHostAddress();
                 if (ip_toban.equalsIgnoreCase(tmp_player_ip) || player_name.equalsIgnoreCase(pplayer.getDisplayName())) {
+                    player_found = true;
+                    ip_toban = tmp_player_ip;
                     player_uuid = pplayer.getUniqueId();
                     if (player_uuid == sender_uuid) {
                         // Deny players from banning themselves
@@ -245,10 +247,6 @@ public class banip extends Command implements TabExecutor {
                         sender.sendMessage(new TextComponent(bypass));
                         pplayer.sendMessage(new TextComponent(bypass_warn));
                         return; // Force exiting
-                    } else {
-                        // Execute ban of this IP adress
-                        execute_banip(tmp_player_ip, sender, args);
-                        return; // Force exiting
                     }
                 }
             }
@@ -256,19 +254,28 @@ public class banip extends Command implements TabExecutor {
             // Also search in knownplayers list if IP is protected.
             for (String key: Main.knownplayers.getKeys()) {
                 if (ip_toban.equalsIgnoreCase(Main.knownplayers.getString(key+".ip")) || player_name.equalsIgnoreCase(Main.knownplayers.getString(key+".player"))) {
-                    player_uuid = UUID.fromString(key);
-                    tmp_player_ip = Main.knownplayers.getString(key+".ip");
+                    player_found = true;
+                    ip_toban = Main.knownplayers.getString(key+".ip");
                     // Check if player has bypass from knownplayers file
-                    if (Main.knownplayers.getBoolean(player_uuid.toString()+".bypass")) {
-                        bypass = bypass.replaceAll("%ip%", tmp_player_ip);
+                    if (Main.knownplayers.getBoolean(key+".bypass")) {
+                        bypass = bypass.replaceAll("%ip%", ip_toban);
                         bypass_warn = bypass_warn.replaceAll("%sender%", sender.getName());
                         sender.sendMessage(new TextComponent(bypass));
                         return; // Force exiting
-                    } else {
-                        // Execute ban of this IP adress
-                        execute_banip(tmp_player_ip, sender, args);
-                        player_found = true;
-                        return; // Force exiting
+                    }
+                }
+            }
+            // Redo the loop, assuming we know the ip of the player now.
+            if (!arg_is_ip) {
+                for (String key: Main.knownplayers.getKeys()) {
+                    if (ip_toban.equalsIgnoreCase(Main.knownplayers.getString(key+".ip"))) {
+                        // Check if player has bypass from knownplayers file
+                        if (Main.knownplayers.getBoolean(key+".bypass")) {
+                            bypass = bypass.replaceAll("%ip%", ip_toban);
+                            bypass_warn = bypass_warn.replaceAll("%sender%", sender.getName());
+                            sender.sendMessage(new TextComponent(bypass));
+                            return; // Force exiting
+                        }
                     }
                 }
             }
@@ -279,7 +286,8 @@ public class banip extends Command implements TabExecutor {
                 execute_banip(ip_toban, sender, args);
             } else {
                 // then player is not found or ip is not valid.
-                if (!player_found) sender.sendMessage(new TextComponent(unknown));
+                if (player_found) execute_banip(ip_toban, sender, args);
+                else sender.sendMessage(new TextComponent(unknown));
                 return;
             }
         } else {
