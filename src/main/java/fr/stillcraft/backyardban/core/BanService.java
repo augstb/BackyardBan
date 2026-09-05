@@ -1,7 +1,5 @@
 package fr.stillcraft.backyardban.core;
 
-import net.md_5.bungee.config.Configuration;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
@@ -29,7 +27,7 @@ public final class BanService {
         return endtime < 0 ? "Forever" : formatDate(endtime);
     }
 
-    public static void recordBan(Configuration banlist, UUID uuid, String player, String banisher,
+    public static void recordBan(YamlDocument banlist, UUID uuid, String player, String banisher,
                                   long fromtime, long endtime, String reason, String ip) {
         String key = uuid.toString();
         banlist.set(key + ".player", player);
@@ -42,7 +40,7 @@ public final class BanService {
         banlist.set(key + ".ip", ip);
     }
 
-    public static void recordIpBan(Configuration baniplist, String ipKey, String banisher,
+    public static void recordIpBan(YamlDocument baniplist, String ipKey, String banisher,
                                     long fromtime, long endtime, String reason) {
         baniplist.set(ipKey + ".banisher", banisher);
         baniplist.set(ipKey + ".from", fromtime);
@@ -53,7 +51,7 @@ public final class BanService {
     }
 
     // Marks a ban record as expired as of now (keeps history: banisher/reason/etc are left untouched).
-    public static void clearBan(Configuration list, String key) {
+    public static void clearBan(YamlDocument list, String key) {
         long now = System.currentTimeMillis() / 1000L;
         list.set(key + ".until", now);
         list.set(key + ".untildate", formatDate(now));
@@ -76,21 +74,21 @@ public final class BanService {
     }
 
     // Works identically for banlist (key = uuid string) and baniplist (key = ip key).
-    public static BanStatus checkBan(Configuration list, String key, String defaultBanisher) {
+    public static BanStatus checkBan(YamlDocument list, String key, String defaultBanisher) {
         long until = -1;
         long timeleft = -1;
         String banisher = defaultBanisher;
         String reason = "";
         boolean present = list.getKeys().contains(key);
         if (present) {
-            if (list.getSection(key).contains("until")) {
+            if (list.contains(key + ".until")) {
                 until = list.getLong(key + ".until");
                 timeleft = until - System.currentTimeMillis() / 1000L;
             }
-            if (list.getSection(key).contains("banisher")) {
+            if (list.contains(key + ".banisher")) {
                 banisher = list.getString(key + ".banisher");
             }
-            if (list.getSection(key).contains("reason")) {
+            if (list.contains(key + ".reason")) {
                 reason = list.getString(key + ".reason");
             }
         }
