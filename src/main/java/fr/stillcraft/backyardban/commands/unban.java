@@ -148,7 +148,7 @@ public class unban extends Command implements TabExecutor {
                     tmp_player_ip = key.replace("-",".").replace("_",":");
                     if (ip_tounban.equalsIgnoreCase(tmp_player_ip)) {
                         long ip_until = Main.baniplist.getLong(key+".until");
-                        if (ip_tounban == sender_ip){
+                        if (ip_tounban.equalsIgnoreCase(sender_ip)){
                             // Deny players from unbanning themselves
                             sender.sendMessage(new TextComponent(yourself));
                         } else if ((ip_until > System.currentTimeMillis() / 1000L) || ip_until < 0) {
@@ -165,7 +165,7 @@ public class unban extends Command implements TabExecutor {
                         player_uuid = UUID.fromString(key);
                         player_name = Main.banlist.getString(key+".player");
                         long until = Main.banlist.getLong(key+".until");
-                        if (player_uuid == sender_uuid) {
+                        if (player_uuid.equals(sender_uuid)) {
                             // Deny players from unbanning themselves
                             sender.sendMessage(new TextComponent(yourself));
                         } else if ((until > System.currentTimeMillis() / 1000L) || until < 0) {
@@ -182,7 +182,7 @@ public class unban extends Command implements TabExecutor {
                     if (args[0].equalsIgnoreCase(Main.knownplayers.getString(key+".player"))) {
                         player_uuid = UUID.fromString(key);
                         player_name = Main.knownplayers.getString(key+".player");
-                        if (player_uuid == sender_uuid) {
+                        if (player_uuid.equals(sender_uuid)) {
                             // Deny players from unbanning themselves
                             sender.sendMessage(new TextComponent(yourself));
                         } else {

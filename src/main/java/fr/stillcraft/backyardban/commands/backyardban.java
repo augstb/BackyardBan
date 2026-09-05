@@ -53,7 +53,7 @@ public class backyardban extends Command implements TabExecutor {
             String search = args[0].toLowerCase();
             if ("help".startsWith(search)) matches.add("help");
             if ("ban".startsWith(search)) matches.add("ban");
-            if (("unban".startsWith(search) || "pardon".startsWith(search)) && has_unban_perm) matches.add("ban");
+            if (("unban".startsWith(search) || "pardon".startsWith(search)) && has_unban_perm) matches.add("unban");
             if ("banip".startsWith(search) && has_banip_perm) matches.add("banip");
             if ("reload".startsWith(search) && has_reload_perm) matches.add("reload");
             if ("version".startsWith(search)) matches.add("version");

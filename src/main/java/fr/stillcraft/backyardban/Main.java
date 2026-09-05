@@ -41,7 +41,7 @@ public final class Main extends Plugin {
     }
 
     // Version (don't forget to increment)
-    public static final String version = "1.0";
+    public static final String version = "1.1";
     // Used config files keys
     private static final String[] locale_keys = {
             "ban.banned","ban.until","ban.confirm","ban.info","ban.unknown","ban.bypass","ban.bypass_warn","ban.usage","ban.description","ban.yourself",

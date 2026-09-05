@@ -60,6 +60,7 @@ public class banip extends Command implements TabExecutor {
         long timeleft = -1;
         long endtime = -1;
         String timeleft_str = "";
+        boolean invalid_duration = false;
         if (args.length > 1) {
             if (args[1].startsWith("t:")) {
                 reason_strstart = 2;
@@ -68,29 +69,33 @@ public class banip extends Command implements TabExecutor {
                     String timeleft_str_tmp = timeleft_str_parts[1];
                     // Parse and convert time format to seconds from s | min | h | d | m | y
                     endtime = System.currentTimeMillis() / 1000L;
-                    if (timeleft_str_tmp.endsWith("s")) {
-                        String[] timeleft_parts = timeleft_str_tmp.split("s");
-                        if (timeleft_parts.length > 0) timeleft = Integer.parseInt(timeleft_parts[0]);
-                    }
-                    else if (timeleft_str_tmp.endsWith("min")) {
-                        String[] timeleft_parts = timeleft_str_tmp.split("min");
-                        if (timeleft_parts.length > 0) timeleft = 60*Integer.parseInt(timeleft_parts[0]);
-                    }
-                    else if (timeleft_str_tmp.endsWith("h")) {
-                        String[] timeleft_parts = timeleft_str_tmp.split("h");
-                        if (timeleft_parts.length > 0) timeleft = 3600*Integer.parseInt(timeleft_parts[0]);
-                    }
-                    else if (timeleft_str_tmp.endsWith("d")) {
-                        String[] timeleft_parts = timeleft_str_tmp.split("d");
-                        if (timeleft_parts.length > 0) timeleft = 86400*Integer.parseInt(timeleft_parts[0]);
-                    }
-                    else if (timeleft_str_tmp.endsWith("m")) {
-                        String[] timeleft_parts = timeleft_str_tmp.split("m");
-                        if (timeleft_parts.length > 0) timeleft = 2592000*Integer.parseInt(timeleft_parts[0]);
-                    }
-                    else if (timeleft_str_tmp.endsWith("y")) {
-                        String[] timeleft_parts = timeleft_str_tmp.split("y");
-                        if (timeleft_parts.length > 0) timeleft = 31104000*Integer.parseInt(timeleft_parts[0]);
+                    try {
+                        if (timeleft_str_tmp.endsWith("s")) {
+                            String[] timeleft_parts = timeleft_str_tmp.split("s");
+                            if (timeleft_parts.length > 0) timeleft = Integer.parseInt(timeleft_parts[0]);
+                        }
+                        else if (timeleft_str_tmp.endsWith("min")) {
+                            String[] timeleft_parts = timeleft_str_tmp.split("min");
+                            if (timeleft_parts.length > 0) timeleft = 60L*Integer.parseInt(timeleft_parts[0]);
+                        }
+                        else if (timeleft_str_tmp.endsWith("h")) {
+                            String[] timeleft_parts = timeleft_str_tmp.split("h");
+                            if (timeleft_parts.length > 0) timeleft = 3600L*Integer.parseInt(timeleft_parts[0]);
+                        }
+                        else if (timeleft_str_tmp.endsWith("d")) {
+                            String[] timeleft_parts = timeleft_str_tmp.split("d");
+                            if (timeleft_parts.length > 0) timeleft = 86400L*Integer.parseInt(timeleft_parts[0]);
+                        }
+                        else if (timeleft_str_tmp.endsWith("m")) {
+                            String[] timeleft_parts = timeleft_str_tmp.split("m");
+                            if (timeleft_parts.length > 0) timeleft = 2592000L*Integer.parseInt(timeleft_parts[0]);
+                        }
+                        else if (timeleft_str_tmp.endsWith("y")) {
+                            String[] timeleft_parts = timeleft_str_tmp.split("y");
+                            if (timeleft_parts.length > 0) timeleft = 31104000L*Integer.parseInt(timeleft_parts[0]);
+                        }
+                    } catch (NumberFormatException e) {
+                        timeleft = -1;
                     }
                     if (timeleft > 0) {
                         endtime += timeleft;
@@ -107,12 +112,22 @@ public class banip extends Command implements TabExecutor {
                         else if (int_minutes > 0) timeleft_str += Long.toString(int_minutes) + minutes;
                         else if (int_seconds > 0) timeleft_str += Long.toString(int_seconds) + seconds;
                     }
-                    else endtime = -1;
+                    else {
+                        // Unrecognized/overflowing duration suffix: reject rather than silently ban forever.
+                        invalid_duration = true;
+                    }
                 } else {
-                    // Handle the case where there is no colon in the string
-                    // You can set a default value, display an error message, or take appropriate action.
+                    // No value after "t:" (e.g. just "t:"): reject rather than silently ban forever.
+                    invalid_duration = true;
                 }
             }
+        }
+
+        if (invalid_duration) {
+            String usage = Main.locale.getString("global.usage")+Main.locale.getString("banip.usage");
+            usage = ChatColor.translateAlternateColorCodes('&', usage);
+            sender.sendMessage(new TextComponent(usage));
+            return;
         }
 
         for (String arg : Arrays.copyOfRange(args, reason_strstart, args.length)) {
@@ -231,11 +246,11 @@ public class banip extends Command implements TabExecutor {
             String tmp_player_ip = "";
             for (ProxiedPlayer pplayer : Main.getInstance().getProxy().getPlayers()) {
                 tmp_player_ip = ((InetSocketAddress) pplayer.getSocketAddress()).getAddress().getHostAddress();
-                if (ip_toban.equalsIgnoreCase(tmp_player_ip) || player_name.equalsIgnoreCase(pplayer.getDisplayName())) {
+                if (ip_toban.equalsIgnoreCase(tmp_player_ip) || player_name.equalsIgnoreCase(pplayer.getName())) {
                     player_found = true;
                     ip_toban = tmp_player_ip;
                     player_uuid = pplayer.getUniqueId();
-                    if (player_uuid == sender_uuid) {
+                    if (player_uuid.equals(sender_uuid)) {
                         // Deny players from banning themselves
                         sender.sendMessage(new TextComponent(yourself));
                         return; // Force exiting

@@ -7,6 +7,7 @@ import net.md_5.bungee.api.event.LoginEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
+import net.md_5.bungee.event.EventPriority;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -19,7 +20,9 @@ import fr.stillcraft.backyardban.Main;
 
 public class loginlistener implements Listener {
 
-    @EventHandler
+    // HIGHEST runs last among LoginEvent listeners, so no other plugin's handler
+    // (e.g. an auth plugin like MaxAuth) can flip isCancelled() back after we deny a banned login.
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onLogin(LoginEvent event) {
         boolean kick_player = false;
         long timeleft = -1;
@@ -127,8 +130,9 @@ public class loginlistener implements Listener {
             banned = banned.replaceAll("%player%", player);
             banned = banned.replaceAll("%timeleft%", timeleft_str);
 
-            // Execute actions (kicks player, and send messages)
-            event.getConnection().disconnect(new TextComponent(banned));
+            // Execute actions (deny the login with the ban message)
+            event.setCancelled(true);
+            event.setCancelReason(new TextComponent(banned));
         }
 
     }
