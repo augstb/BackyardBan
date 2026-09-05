@@ -40,6 +40,22 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <!-- Velocity (unlike BungeeCord) loads plugin classes parent-first for
+                                 third-party libraries, so it prefers its own bundled SnakeYAML over
+                                 ours - an incompatible newer version, causing a NoSuchMethodError on
+                                 org.yaml.snakeyaml.representer.Representer's no-arg constructor.
+                                 Relocating our shaded copies to a private package makes that class
+                                 of collision impossible regardless of what the host proxy bundles. -->
+                            <relocations>
+                                <relocation>
+                                    <pattern>org.yaml.snakeyaml</pattern>
+                                    <shadedPattern>fr.stillcraft.backyardban.libs.snakeyaml</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google.common</pattern>
+                                    <shadedPattern>fr.stillcraft.backyardban.libs.guava</shadedPattern>
+                                </relocation>
+                            </relocations>
                         </configuration>
                     </execution>
                 </executions>
@@ -76,6 +92,21 @@
             <artifactId>velocity-api</artifactId>
             <version>3.4.0-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+        <!-- Standalone YAML config lib (no BungeeCord runtime dependency) shaded into the jar so
+             config/locale/ban-data loading works identically on both BungeeCord and Velocity. -->
+        <dependency>
+            <groupId>net.md-5</groupId>
+            <artifactId>bungeecord-config</artifactId>
+            <version>1.16-R0.5-SNAPSHOT</version>
+        </dependency>
+        <!-- bungeecord-config declares these as optional, so they aren't inherited transitively.
+             BungeeCord always has SnakeYAML on its own classpath, but Velocity doesn't, so it must
+             be declared (and shaded) explicitly or config loading throws NoClassDefFoundError there. -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.27</version>
         </dependency>
     </dependencies>
 </project>

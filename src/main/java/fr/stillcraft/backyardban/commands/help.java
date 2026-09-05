@@ -18,19 +18,19 @@ public class help extends Command {
         boolean has_reload_perm = (!sender_isplayer || sender.hasPermission("backyardban.reload"));
 
         // Get each string from config and locale data
-        String global_prefix = Main.locale.getString("global.prefix");
-        String help_usage = Main.locale.getString("help.usage");
-        String help_description = Main.locale.getString("help.description");
-        String ban_usage = Main.locale.getString("ban.usage");
-        String ban_description = Main.locale.getString("ban.description");
-        String banip_usage = Main.locale.getString("banip.usage");
-        String banip_description = Main.locale.getString("banip.description");
-        String unban_usage = Main.locale.getString("unban.usage");
-        String unban_description = Main.locale.getString("unban.description");
-        String reload_usage = Main.locale.getString("reload.usage");
-        String reload_description = Main.locale.getString("reload.description");
-        String version_usage = Main.locale.getString("version.usage");
-        String version_description = Main.locale.getString("version.description");
+        String global_prefix = Main.cfg.msg("global.prefix");
+        String help_usage = Main.cfg.msg("help.usage");
+        String help_description = Main.cfg.msg("help.description");
+        String ban_usage = Main.cfg.msg("ban.usage");
+        String ban_description = Main.cfg.msg("ban.description");
+        String banip_usage = Main.cfg.msg("banip.usage");
+        String banip_description = Main.cfg.msg("banip.description");
+        String unban_usage = Main.cfg.msg("unban.usage");
+        String unban_description = Main.cfg.msg("unban.description");
+        String reload_usage = Main.cfg.msg("reload.usage");
+        String reload_description = Main.cfg.msg("reload.description");
+        String version_usage = Main.cfg.msg("version.usage");
+        String version_description = Main.cfg.msg("version.description");
 
         // Colorize each string
         global_prefix = ChatColor.translateAlternateColorCodes('&', global_prefix);

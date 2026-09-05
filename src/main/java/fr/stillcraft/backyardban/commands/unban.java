@@ -3,6 +3,9 @@ package fr.stillcraft.backyardban.commands;
 import com.google.common.collect.ImmutableSet;
 
 import fr.stillcraft.backyardban.Main;
+import fr.stillcraft.backyardban.core.BanService;
+import fr.stillcraft.backyardban.core.IpUtil;
+import fr.stillcraft.backyardban.core.MessageFormatter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -10,10 +13,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -24,29 +24,21 @@ public class unban extends Command implements TabExecutor {
 
     public void execute_unban(UUID player_uuid, String player_name, CommandSender sender){
         // Get each string from config and locale data
-        boolean broadcast = Main.config.getBoolean("broadcast");
+        boolean broadcast = Main.cfg.cfgBool("broadcast");
 
         // Parse placeholders
-        String confirm = Main.locale.getString("unban.confirm");
-        String info = Main.locale.getString("unban.info");
+        String confirm = Main.cfg.msg("unban.confirm");
+        String info = Main.cfg.msg("unban.info");
         confirm = ChatColor.translateAlternateColorCodes('&', confirm);
         info = ChatColor.translateAlternateColorCodes('&', info);
-        confirm = confirm.replaceAll("%sender%", sender.getName());
-        confirm = confirm.replaceAll("%player%", player_name);
-        info = info.replaceAll("%sender%", sender.getName());
-        info = info.replaceAll("%player%", player_name);
+        confirm = MessageFormatter.replacePlaceholders(confirm, sender.getName(), player_name, null, null, null);
+        info = MessageFormatter.replacePlaceholders(info, sender.getName(), player_name, null, null, null);
 
-        long endtime = System.currentTimeMillis() / 1000L;
-        Date endtime_date = new Date(endtime * 1000L);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String formattedDate = sdf.format(endtime_date);
-        
         // EXECUTE UNBAN
-        Main.banlist.set(player_uuid.toString()+".until", endtime);
-        Main.banlist.set(player_uuid.toString()+".untildate", formattedDate);
+        BanService.clearBan(Main.cfg.banlist, player_uuid.toString());
         try {
-            Main.getInstance().saveConfig(Main.banlist, "data/banlist");
-        } catch (IOException e) {
+            Main.cfg.saveConfig(Main.cfg.banlist, "data/banlist");
+        } catch (java.io.IOException e) {
             throw new RuntimeException(e);
         }
         Main.getInstance().getLogger().log(Level.INFO, info);
@@ -61,29 +53,21 @@ public class unban extends Command implements TabExecutor {
 
     public void execute_unbanip(String key, String tmp_player_ip, CommandSender sender){
         // Get each string from config and locale data
-        boolean broadcast = Main.config.getBoolean("broadcast");
+        boolean broadcast = Main.cfg.cfgBool("broadcast");
 
         // Parse placeholders
-        String ipconfirm = Main.locale.getString("unban.ipconfirm");
-        String ipinfo = Main.locale.getString("unban.ipinfo");
+        String ipconfirm = Main.cfg.msg("unban.ipconfirm");
+        String ipinfo = Main.cfg.msg("unban.ipinfo");
         ipconfirm = ChatColor.translateAlternateColorCodes('&', ipconfirm);
         ipinfo = ChatColor.translateAlternateColorCodes('&', ipinfo);
-        ipconfirm = ipconfirm.replaceAll("%sender%", sender.getName());
-        ipconfirm = ipconfirm.replaceAll("%ip%", tmp_player_ip);
-        ipinfo = ipinfo.replaceAll("%sender%", sender.getName());
-        ipinfo = ipinfo.replaceAll("%ip%", tmp_player_ip);
+        ipconfirm = MessageFormatter.replacePlaceholders(ipconfirm, sender.getName(), null, tmp_player_ip, null, null);
+        ipinfo = MessageFormatter.replacePlaceholders(ipinfo, sender.getName(), null, tmp_player_ip, null, null);
 
-        long endtime = System.currentTimeMillis() / 1000L;
-        Date endtime_date = new Date(endtime * 1000L);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String formattedDate = sdf.format(endtime_date);
-        
         // EXECUTE UNBAN
-        Main.baniplist.set(key+".until", endtime);
-        Main.baniplist.set(key+".untildate", formattedDate);
+        BanService.clearBan(Main.cfg.baniplist, key);
         try {
-            Main.getInstance().saveConfig(Main.baniplist, "data/baniplist");
-        } catch (IOException e) {
+            Main.cfg.saveConfig(Main.cfg.baniplist, "data/baniplist");
+        } catch (java.io.IOException e) {
             throw new RuntimeException(e);
         }
         Main.getInstance().getLogger().log(Level.INFO, ipinfo);
@@ -99,11 +83,11 @@ public class unban extends Command implements TabExecutor {
     @Override
     public void execute(CommandSender sender, String[] args){
         // Get each string from config and locale data
-        String yourself = Main.locale.getString("unban.yourself");
-        String usage = Main.locale.getString("global.usage")+Main.locale.getString("unban.usage");
-        String description = Main.locale.getString("global.description")+Main.locale.getString("unban.description");
-        String notfound = Main.locale.getString("unban.notfound");
-        String ipnotfound = Main.locale.getString("unban.ipnotfound");
+        String yourself = Main.cfg.msg("unban.yourself");
+        String usage = Main.cfg.msg("global.usage")+Main.cfg.msg("unban.usage");
+        String description = Main.cfg.msg("global.description")+Main.cfg.msg("unban.description");
+        String notfound = Main.cfg.msg("unban.notfound");
+        String ipnotfound = Main.cfg.msg("unban.ipnotfound");
         // Colorize each string
         yourself = ChatColor.translateAlternateColorCodes('&', yourself);
         usage = ChatColor.translateAlternateColorCodes('&', usage);
@@ -135,7 +119,7 @@ public class unban extends Command implements TabExecutor {
             Boolean arg_is_ip = false;
             Boolean player_found = false;
             Boolean ip_found = false;
-            if (Main.isIPv4(args[0]) || Main.isIPv6(args[0])) {
+            if (IpUtil.isIPv4(args[0]) || IpUtil.isIPv6(args[0])) {
                 ip_tounban = args[0];
                 arg_is_ip = true;
             }
@@ -144,10 +128,10 @@ public class unban extends Command implements TabExecutor {
             String tmp_player_ip = "";
             if (arg_is_ip) {
                 // only unban ip.
-                for (String key: Main.baniplist.getKeys()) {
-                    tmp_player_ip = key.replace("-",".").replace("_",":");
+                for (String key: Main.cfg.baniplist.getKeys()) {
+                    tmp_player_ip = BanService.keyToIp(key);
                     if (ip_tounban.equalsIgnoreCase(tmp_player_ip)) {
-                        long ip_until = Main.baniplist.getLong(key+".until");
+                        long ip_until = Main.cfg.baniplist.getLong(key+".until");
                         if (ip_tounban.equalsIgnoreCase(sender_ip)){
                             // Deny players from unbanning themselves
                             sender.sendMessage(new TextComponent(yourself));
@@ -160,11 +144,11 @@ public class unban extends Command implements TabExecutor {
                 }
             } else {
                 // then unban a player
-                for (String key: Main.banlist.getKeys()) {
-                    if (args[0].equalsIgnoreCase(Main.banlist.getString(key+".player"))) {
+                for (String key: Main.cfg.banlist.getKeys()) {
+                    if (args[0].equalsIgnoreCase(Main.cfg.banlist.getString(key+".player"))) {
                         player_uuid = UUID.fromString(key);
-                        player_name = Main.banlist.getString(key+".player");
-                        long until = Main.banlist.getLong(key+".until");
+                        player_name = Main.cfg.banlist.getString(key+".player");
+                        long until = Main.cfg.banlist.getLong(key+".until");
                         if (player_uuid.equals(sender_uuid)) {
                             // Deny players from unbanning themselves
                             sender.sendMessage(new TextComponent(yourself));
@@ -178,19 +162,19 @@ public class unban extends Command implements TabExecutor {
                 }
 
                 // then unban his last ip if banned
-                for (String key: Main.knownplayers.getKeys()) {
-                    if (args[0].equalsIgnoreCase(Main.knownplayers.getString(key+".player"))) {
+                for (String key: Main.cfg.knownplayers.getKeys()) {
+                    if (args[0].equalsIgnoreCase(Main.cfg.knownplayers.getString(key+".player"))) {
                         player_uuid = UUID.fromString(key);
-                        player_name = Main.knownplayers.getString(key+".player");
+                        player_name = Main.cfg.knownplayers.getString(key+".player");
                         if (player_uuid.equals(sender_uuid)) {
                             // Deny players from unbanning themselves
                             sender.sendMessage(new TextComponent(yourself));
                         } else {
                             // Also unban last known IP address if it is banned.
-                            String player_ip = Main.knownplayers.getString(key+".ip");
-                            String ip_key = player_ip.replace(".","-").replace(":","_");
-                            if (Main.baniplist.getKeys().contains(ip_key)){
-                                long ip_until = Main.baniplist.getLong(ip_key+".until");
+                            String player_ip = Main.cfg.knownplayers.getString(key+".ip");
+                            String ip_key = BanService.ipToKey(player_ip);
+                            if (Main.cfg.baniplist.getKeys().contains(ip_key)){
+                                long ip_until = Main.cfg.baniplist.getLong(ip_key+".until");
                                 if ((ip_until > System.currentTimeMillis() / 1000L) || ip_until < 0 ) {
                                     // Unban this IP if found.
                                     player_found = true;
@@ -201,14 +185,14 @@ public class unban extends Command implements TabExecutor {
                     }
                 }
             }
-            
+
             if (arg_is_ip && !ip_found) {
-                ipnotfound = ipnotfound.replaceAll("%ip%", args[0]);
+                ipnotfound = MessageFormatter.replacePlaceholders(ipnotfound, null, null, args[0], null, null);
                 sender.sendMessage(new TextComponent(ipnotfound));
             }
             if (!arg_is_ip && !player_found) {
                 // Send message to sender if player is not banned.
-                notfound = notfound.replaceAll("%player%", args[0]);
+                notfound = MessageFormatter.replacePlaceholders(notfound, null, args[0], null, null, null);
                 sender.sendMessage(new TextComponent(notfound));
             }
         } else {

@@ -1,7 +1,7 @@
-# <img src="./illustrations/backyardban.png" style="height:48px" /> BackyardBan (BungeeCord Plugin)
+# <img src="./illustrations/backyardban.png" style="height:48px" /> BackyardBan (BungeeCord & Velocity Plugin)
 
 #### Description:
-***BackyardBan*** is a very basic BungeeCord plugin which allows Minecraft server moderators to ban players and ip addresses from the entire bungee network with optional expiration time as well as custom message.
+***BackyardBan*** is a very basic proxy plugin which allows Minecraft server moderators to ban players and ip addresses from the entire network with optional expiration time as well as custom message. It runs on both **BungeeCord** and **Velocity** — a single jar works on either proxy.
 
 ![image](./illustrations/illustration.jpg)
 

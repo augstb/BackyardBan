@@ -3,6 +3,10 @@ package fr.stillcraft.backyardban.commands;
 import com.google.common.collect.ImmutableSet;
 
 import fr.stillcraft.backyardban.Main;
+import fr.stillcraft.backyardban.core.BanService;
+import fr.stillcraft.backyardban.core.DurationParser;
+import fr.stillcraft.backyardban.core.IpUtil;
+import fr.stillcraft.backyardban.core.MessageFormatter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -10,12 +14,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.text.SimpleDateFormat;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -26,163 +25,52 @@ public class banip extends Command implements TabExecutor {
 
     public void execute_banip(String player_ip, CommandSender sender, String[] args){
         // Get each string from config and locale data
-        boolean broadcast = Main.config.getBoolean("broadcast");
-        String banned = Main.locale.getString("banip.banned");
-        String until = Main.locale.getString("banip.until");
-        String confirm = Main.locale.getString("banip.confirm");
-        String reason = Main.locale.getString("global.reason");
-        String separator = Main.locale.getString("global.separator");
-        String punctuation = Main.locale.getString("global.punctuation");
-        String info = Main.locale.getString("banip.info");
-        String days = Main.locale.getString("global.days");
-        String hours = Main.locale.getString("global.hours");
-        String minutes = Main.locale.getString("global.minutes");
-        String seconds = Main.locale.getString("global.seconds");
+        boolean broadcast = Main.cfg.cfgBool("broadcast");
+        String banned = Main.cfg.msg("banip.banned");
+        String until = Main.cfg.msg("banip.until");
+        String confirm = Main.cfg.msg("banip.confirm");
+        String reason = Main.cfg.msg("global.reason");
+        String separator = Main.cfg.msg("global.separator");
+        String punctuation = Main.cfg.msg("global.punctuation");
+        String info = Main.cfg.msg("banip.info");
+        String days = Main.cfg.msg("global.days");
+        String hours = Main.cfg.msg("global.hours");
+        String minutes = Main.cfg.msg("global.minutes");
+        String seconds = Main.cfg.msg("global.seconds");
 
-        // Colorize each string
-        banned = ChatColor.translateAlternateColorCodes('&', banned);
-        until = ChatColor.translateAlternateColorCodes('&', until);
-        confirm = ChatColor.translateAlternateColorCodes('&', confirm);
-        reason = ChatColor.translateAlternateColorCodes('&', reason);
-        separator = ChatColor.translateAlternateColorCodes('&', separator);
-        punctuation = ChatColor.translateAlternateColorCodes('&', punctuation);
-        info = ChatColor.translateAlternateColorCodes('&', info);
-        days = ChatColor.translateAlternateColorCodes('&', days);
-        hours = ChatColor.translateAlternateColorCodes('&', hours);
-        minutes = ChatColor.translateAlternateColorCodes('&', minutes);
-        seconds = ChatColor.translateAlternateColorCodes('&', seconds);
-
-        // Construct complete ban strings
-        StringBuilder stringBuilder = new StringBuilder();
-
-        // Check if there is an end to that ban.
-        int reason_strstart = 1;
-        long timeleft = -1;
-        long endtime = -1;
-        String timeleft_str = "";
-        boolean invalid_duration = false;
-        if (args.length > 1) {
-            if (args[1].startsWith("t:")) {
-                reason_strstart = 2;
-                String[] timeleft_str_parts = args[1].split(":");
-                if (timeleft_str_parts.length > 1) {
-                    String timeleft_str_tmp = timeleft_str_parts[1];
-                    // Parse and convert time format to seconds from s | min | h | d | m | y
-                    endtime = System.currentTimeMillis() / 1000L;
-                    try {
-                        if (timeleft_str_tmp.endsWith("s")) {
-                            String[] timeleft_parts = timeleft_str_tmp.split("s");
-                            if (timeleft_parts.length > 0) timeleft = Integer.parseInt(timeleft_parts[0]);
-                        }
-                        else if (timeleft_str_tmp.endsWith("min")) {
-                            String[] timeleft_parts = timeleft_str_tmp.split("min");
-                            if (timeleft_parts.length > 0) timeleft = 60L*Integer.parseInt(timeleft_parts[0]);
-                        }
-                        else if (timeleft_str_tmp.endsWith("h")) {
-                            String[] timeleft_parts = timeleft_str_tmp.split("h");
-                            if (timeleft_parts.length > 0) timeleft = 3600L*Integer.parseInt(timeleft_parts[0]);
-                        }
-                        else if (timeleft_str_tmp.endsWith("d")) {
-                            String[] timeleft_parts = timeleft_str_tmp.split("d");
-                            if (timeleft_parts.length > 0) timeleft = 86400L*Integer.parseInt(timeleft_parts[0]);
-                        }
-                        else if (timeleft_str_tmp.endsWith("m")) {
-                            String[] timeleft_parts = timeleft_str_tmp.split("m");
-                            if (timeleft_parts.length > 0) timeleft = 2592000L*Integer.parseInt(timeleft_parts[0]);
-                        }
-                        else if (timeleft_str_tmp.endsWith("y")) {
-                            String[] timeleft_parts = timeleft_str_tmp.split("y");
-                            if (timeleft_parts.length > 0) timeleft = 31104000L*Integer.parseInt(timeleft_parts[0]);
-                        }
-                    } catch (NumberFormatException e) {
-                        timeleft = -1;
-                    }
-                    if (timeleft > 0) {
-                        endtime += timeleft;
-                        Duration d = Duration.ofSeconds(timeleft);
-                        long int_days = d.toDays();
-                        d = d.minusDays(int_days);
-                        long int_hours = d.toHours();
-                        d = d.minusHours(int_hours);
-                        long int_minutes = d.toMinutes();
-                        d = d.minusMinutes(int_minutes);
-                        long int_seconds = d.getSeconds();
-                        if (int_days > 0) timeleft_str += Long.toString(int_days) + days;
-                        else if (int_hours > 0) timeleft_str += Long.toString(int_hours) + hours;
-                        else if (int_minutes > 0) timeleft_str += Long.toString(int_minutes) + minutes;
-                        else if (int_seconds > 0) timeleft_str += Long.toString(int_seconds) + seconds;
-                    }
-                    else {
-                        // Unrecognized/overflowing duration suffix: reject rather than silently ban forever.
-                        invalid_duration = true;
-                    }
-                } else {
-                    // No value after "t:" (e.g. just "t:"): reject rather than silently ban forever.
-                    invalid_duration = true;
-                }
-            }
-        }
-
-        if (invalid_duration) {
-            String usage = Main.locale.getString("global.usage")+Main.locale.getString("banip.usage");
-            usage = ChatColor.translateAlternateColorCodes('&', usage);
+        // Parse the optional "t:<duration>" argument
+        DurationParser.Result duration = DurationParser.parse(args, days, hours, minutes, seconds);
+        if (duration.invalid) {
+            String usage = ChatColor.translateAlternateColorCodes('&', Main.cfg.msg("global.usage")+Main.cfg.msg("banip.usage"));
             sender.sendMessage(new TextComponent(usage));
             return;
         }
 
-        for (String arg : Arrays.copyOfRange(args, reason_strstart, args.length)) {
-            stringBuilder.append(arg).append(" ");
-        }
-        String reason_string = stringBuilder.toString();
+        String reason_string = MessageFormatter.buildReason(args, duration.reasonStartIndex);
 
-        if (timeleft > 0) {
-            banned += " " + until;
-            confirm += " " + until;
-            info += " " + until;
-        }
-        // Check if there is a reason or not.
-        if (reason_string.trim().isEmpty()) {
-            banned += punctuation;
-            confirm += punctuation;
-            info += punctuation;
-        } else {
-            reason_string = reason_string.substring(0, reason_string.length()-1);
-            banned += separator + reason;
-            confirm += separator + reason;
-            info += separator + reason;
-        }
+        String[] withUntil = MessageFormatter.appendUntilIfPresent(new String[]{banned, confirm, info}, until, duration.timeleft > 0);
+        String[] withReason = MessageFormatter.appendReasonOrPunctuation(withUntil, reason_string, reason, separator, punctuation);
+        banned = withReason[0];
+        confirm = withReason[1];
+        info = withReason[2];
+
+        // Colorize each string
+        banned = ChatColor.translateAlternateColorCodes('&', banned);
+        confirm = ChatColor.translateAlternateColorCodes('&', confirm);
+        info = ChatColor.translateAlternateColorCodes('&', info);
 
         // Parse placeholders
-        banned = banned.replaceAll("%sender%", sender.getName());
-        confirm = confirm.replaceAll("%sender%", sender.getName());
-        info = info.replaceAll("%sender%", sender.getName());
-        banned = banned.replaceAll("%reason%", reason_string);
-        confirm = confirm.replaceAll("%reason%", reason_string);
-        info = info.replaceAll("%reason%", reason_string);
-        banned = banned.replaceAll("%ip%", player_ip);
-        confirm = confirm.replaceAll("%ip%", player_ip);
-        info = info.replaceAll("%ip%", player_ip);
-        banned = banned.replaceAll("%timeleft%", timeleft_str);
-        confirm = confirm.replaceAll("%timeleft%", timeleft_str);
-        info = info.replaceAll("%timeleft%", timeleft_str);
+        banned = MessageFormatter.replacePlaceholders(banned, sender.getName(), null, player_ip, reason_string, duration.timeleftStr);
+        confirm = MessageFormatter.replacePlaceholders(confirm, sender.getName(), null, player_ip, reason_string, duration.timeleftStr);
+        info = MessageFormatter.replacePlaceholders(info, sender.getName(), null, player_ip, reason_string, duration.timeleftStr);
 
         // Register the ban in yaml file.
-        Date endtime_date = new Date(endtime * 1000L);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String formattedDate = sdf.format(endtime_date);
         long fromtime = System.currentTimeMillis() / 1000L;
-        String formattedfromDate = sdf.format(new Date(fromtime * 1000L));
-        if (endtime < 0) formattedDate = "Forever";
-        String ip_key = player_ip.replace(".","-").replace(":","_");
-        Main.baniplist.set(ip_key+".banisher", sender.getName());
-        Main.baniplist.set(ip_key+".from", fromtime);
-        Main.baniplist.set(ip_key+".until", endtime);
-        Main.baniplist.set(ip_key+".fromdate", formattedfromDate);
-        Main.baniplist.set(ip_key+".untildate", formattedDate);
-        Main.baniplist.set(ip_key+".reason", reason_string);
+        String ip_key = BanService.ipToKey(player_ip);
+        BanService.recordIpBan(Main.cfg.baniplist, ip_key, sender.getName(), fromtime, duration.endtime, reason_string);
         try {
-            Main.getInstance().saveConfig(Main.baniplist, "data/baniplist");
-        } catch (IOException e) {
+            Main.cfg.saveConfig(Main.cfg.baniplist, "data/baniplist");
+        } catch (java.io.IOException e) {
             throw new RuntimeException(e);
         }
         // Execute actions (kicks players, and send messages)
@@ -200,17 +88,16 @@ public class banip extends Command implements TabExecutor {
         } else {
             sender.sendMessage(new TextComponent(confirm));
         }
-        return;
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        String usage = Main.locale.getString("global.usage")+Main.locale.getString("banip.usage");
-        String description = Main.locale.getString("global.description")+Main.locale.getString("banip.description");
-        String yourself = Main.locale.getString("banip.yourself");
-        String unknown = Main.locale.getString("banip.unknown");
-        String bypass = Main.locale.getString("banip.bypass");
-        String bypass_warn = Main.locale.getString("banip.bypass_warn");
+        String usage = Main.cfg.msg("global.usage")+Main.cfg.msg("banip.usage");
+        String description = Main.cfg.msg("global.description")+Main.cfg.msg("banip.description");
+        String yourself = Main.cfg.msg("banip.yourself");
+        String unknown = Main.cfg.msg("banip.unknown");
+        String bypass = Main.cfg.msg("banip.bypass");
+        String bypass_warn = Main.cfg.msg("banip.bypass_warn");
         usage = ChatColor.translateAlternateColorCodes('&', usage);
         description = ChatColor.translateAlternateColorCodes('&', description);
         yourself = ChatColor.translateAlternateColorCodes('&', yourself);
@@ -230,7 +117,7 @@ public class banip extends Command implements TabExecutor {
             String ip_toban = "";
             String player_name = "";
             Boolean arg_is_ip = false;
-            if (Main.isIPv4(args[0]) || Main.isIPv6(args[0])) {
+            if (IpUtil.isIPv4(args[0]) || IpUtil.isIPv6(args[0])) {
                 ip_toban = args[0];
                 arg_is_ip = true;
             }
@@ -257,24 +144,24 @@ public class banip extends Command implements TabExecutor {
                     }
                     else if (pplayer.hasPermission("backyardban.bypass")) {
                         // Deny to banip players that have bypass permission
-                        bypass = bypass.replaceAll("%ip%", tmp_player_ip);
-                        bypass_warn = bypass_warn.replaceAll("%sender%", sender.getName());
+                        bypass = MessageFormatter.replacePlaceholders(bypass, null, null, tmp_player_ip, null, null);
+                        bypass_warn = MessageFormatter.replacePlaceholders(bypass_warn, sender.getName(), null, null, null, null);
                         sender.sendMessage(new TextComponent(bypass));
                         pplayer.sendMessage(new TextComponent(bypass_warn));
                         return; // Force exiting
                     }
                 }
             }
-            
+
             // Also search in knownplayers list if IP is protected.
-            for (String key: Main.knownplayers.getKeys()) {
-                if (ip_toban.equalsIgnoreCase(Main.knownplayers.getString(key+".ip")) || player_name.equalsIgnoreCase(Main.knownplayers.getString(key+".player"))) {
+            for (String key: Main.cfg.knownplayers.getKeys()) {
+                if (ip_toban.equalsIgnoreCase(Main.cfg.knownplayers.getString(key+".ip")) || player_name.equalsIgnoreCase(Main.cfg.knownplayers.getString(key+".player"))) {
                     player_found = true;
-                    ip_toban = Main.knownplayers.getString(key+".ip");
+                    ip_toban = Main.cfg.knownplayers.getString(key+".ip");
                     // Check if player has bypass from knownplayers file
-                    if (Main.knownplayers.getBoolean(key+".bypass")) {
-                        bypass = bypass.replaceAll("%ip%", ip_toban);
-                        bypass_warn = bypass_warn.replaceAll("%sender%", sender.getName());
+                    if (Main.cfg.knownplayers.getBoolean(key+".bypass")) {
+                        bypass = MessageFormatter.replacePlaceholders(bypass, null, null, ip_toban, null, null);
+                        bypass_warn = MessageFormatter.replacePlaceholders(bypass_warn, sender.getName(), null, null, null, null);
                         sender.sendMessage(new TextComponent(bypass));
                         return; // Force exiting
                     }
@@ -282,12 +169,12 @@ public class banip extends Command implements TabExecutor {
             }
             // Redo the loop, assuming we know the ip of the player now.
             if (!arg_is_ip) {
-                for (String key: Main.knownplayers.getKeys()) {
-                    if (ip_toban.equalsIgnoreCase(Main.knownplayers.getString(key+".ip"))) {
+                for (String key: Main.cfg.knownplayers.getKeys()) {
+                    if (ip_toban.equalsIgnoreCase(Main.cfg.knownplayers.getString(key+".ip"))) {
                         // Check if player has bypass from knownplayers file
-                        if (Main.knownplayers.getBoolean(key+".bypass")) {
-                            bypass = bypass.replaceAll("%ip%", ip_toban);
-                            bypass_warn = bypass_warn.replaceAll("%sender%", sender.getName());
+                        if (Main.cfg.knownplayers.getBoolean(key+".bypass")) {
+                            bypass = MessageFormatter.replacePlaceholders(bypass, null, null, ip_toban, null, null);
+                            bypass_warn = MessageFormatter.replacePlaceholders(bypass_warn, sender.getName(), null, null, null, null);
                             sender.sendMessage(new TextComponent(bypass));
                             return; // Force exiting
                         }
@@ -303,7 +190,6 @@ public class banip extends Command implements TabExecutor {
                 // then player is not found or ip is not valid.
                 if (player_found) execute_banip(ip_toban, sender, args);
                 else sender.sendMessage(new TextComponent(unknown));
-                return;
             }
         } else {
             // Send usage and description message to sender
